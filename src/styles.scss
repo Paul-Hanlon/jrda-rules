@@ -1,0 +1,168 @@
+// Design Tokens
+:root {
+  // Colors - roller derby inspired, WCAG AA compliant
+  --color-primary: #0d7377;
+  --color-primary-light: #14a3a8;
+  --color-primary-dark: #095456;
+  --color-accent: #d6336c;
+  --color-accent-light: #e8668a;
+  --color-secondary: #6741d9;
+  --color-secondary-light: #845ef7;
+
+  // Skill level colors
+  --color-level-1: #2b8a3e;
+  --color-level-2: #e67700;
+  --color-level-3: #c92a2a;
+
+  // JRDA addendum
+  --color-jrda: #f59f00;
+  --color-jrda-bg: #fff9db;
+  --color-jrda-border: #fcc419;
+
+  // Neutrals
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-text: #212529;
+  --color-text-secondary: #495057;
+  --color-text-muted: #868e96;
+  --color-border: #dee2e6;
+  --color-border-light: #e9ecef;
+
+  // Feedback
+  --color-success: #2b8a3e;
+  --color-error: #c92a2a;
+
+  // Typography
+  --font-heading: 'Nunito', sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
+
+  // Spacing
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  // Borders
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  // Shadows
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  // Layout
+  --header-height: 64px;
+  --nav-height-mobile: 64px;
+  --max-width: 1200px;
+  --touch-target: 48px;
+}
+
+// Reset & Base
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--color-primary-light);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  border: none;
+  background: none;
+
+  &:focus-visible {
+    outline: 3px solid var(--color-primary-light);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+ul, ol {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+// Skip to content link
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: var(--space-md);
+  z-index: 1000;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+
+  &:focus {
+    top: var(--space-md);
+  }
+}
+
+// Utility classes
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
