@@ -1,16 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './shared/components/header/header.component';
+import { OnboardingDialogComponent } from './shared/components/onboarding-dialog/onboarding-dialog.component';
+import { UserProfileService } from './services/user-profile.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent],
+  imports: [RouterOutlet, HeaderComponent, OnboardingDialogComponent],
   template: `
     <a class="skip-to-content" href="#main-content">Skip to content</a>
     <app-header />
     <main id="main-content" class="main-content">
       <router-outlet />
     </main>
+    @if (profileService.isNewUser()) {
+      <app-onboarding-dialog (dismissed)="profileService.isNewUser.set(false)" />
+    }
   `,
   styles: `
     .main-content {
@@ -25,4 +30,6 @@ import { HeaderComponent } from './shared/components/header/header.component';
     }
   `,
 })
-export class App {}
+export class App {
+  protected readonly profileService = inject(UserProfileService);
+}

@@ -39,6 +39,14 @@ testem.log
 /typings
 __screenshots__/
 
+# Firebase
+.firebase/
+
+# Docs build output
+jrda-rules-docs/node_modules
+jrda-rules-docs/build
+jrda-rules-docs/.docusaurus
+
 # System files
 .DS_Store
 Thumbs.db

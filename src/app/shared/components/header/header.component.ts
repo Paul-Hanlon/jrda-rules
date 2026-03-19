@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { ReadingAgeSelectorComponent } from '../reading-age-selector/reading-age-selector.component';
 import { SkillLevelSelectorComponent } from '../skill-level-selector/skill-level-selector.component';
 
 interface NavItem {
@@ -11,7 +12,7 @@ interface NavItem {
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, SkillLevelSelectorComponent],
+  imports: [RouterLink, RouterLinkActive, ReadingAgeSelectorComponent, SkillLevelSelectorComponent],
   template: `
     <header class="header">
       <div class="header-inner">
@@ -32,7 +33,11 @@ interface NavItem {
             </a>
           }
         </nav>
-        <app-skill-level-selector />
+        <div class="selectors">
+          <app-reading-age-selector />
+          <div class="selector-divider" aria-hidden="true"></div>
+          <app-skill-level-selector />
+        </div>
       </div>
     </header>
     <nav class="mobile-nav" aria-label="Main navigation">
@@ -61,12 +66,18 @@ interface NavItem {
 
     .header-inner {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: var(--space-lg);
+      gap: var(--space-sm) var(--space-lg);
       max-width: var(--max-width);
       margin: 0 auto;
-      padding: 0 var(--space-md);
-      height: var(--header-height);
+      padding: var(--space-sm) var(--space-md);
+      min-height: var(--header-height);
+
+      @media (min-width: 768px) {
+        flex-wrap: nowrap;
+        padding: 0 var(--space-md);
+      }
     }
 
     .logo {
@@ -166,14 +177,41 @@ interface NavItem {
     .nav-icon {
       font-size: 1.25rem;
     }
+
+    .selectors {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-xs);
+      width: 100%;
+
+      @media (min-width: 768px) {
+        flex-direction: row;
+        width: auto;
+        gap: var(--space-md);
+        justify-content: flex-end;
+      }
+    }
+
+    .selector-divider {
+      display: none;
+
+      @media (min-width: 768px) {
+        display: block;
+        width: 1px;
+        height: 24px;
+        background: var(--color-border-light);
+      }
+    }
   `,
 })
 export class HeaderComponent {
   protected readonly navItems: NavItem[] = [
-    { path: '/', label: 'Home', icon: '\u2302' },
+    { path: '/', label: 'Home', icon: '\u{1F3E0}' },
     { path: '/rules', label: 'Rules', icon: '\u{1F4D6}' },
     { path: '/glossary', label: 'Glossary', icon: '\u{1F50D}' },
     { path: '/quizzes', label: 'Quizzes', icon: '\u{2753}' },
     { path: '/casebook', label: 'Casebook', icon: '\u{1F4CB}' },
+    { path: '/support', label: 'Support', icon: '\u2615' },
   ];
 }

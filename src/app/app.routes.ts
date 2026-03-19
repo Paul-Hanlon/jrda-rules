@@ -44,6 +44,11 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'support',
+    loadComponent: () =>
+      import('./features/support/support.component').then((m) => m.SupportComponent),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

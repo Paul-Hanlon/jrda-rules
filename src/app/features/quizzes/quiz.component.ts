@@ -12,11 +12,12 @@ import { QuizService } from '../../services/quiz.service';
 import { ProgressService } from '../../services/progress.service';
 import { QuizQuestion } from '../../models/quiz';
 import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
+import { FlagQuestionDialogComponent } from '../../shared/components/flag-question-dialog/flag-question-dialog.component';
 
 @Component({
   selector: 'app-quiz',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ProgressBarComponent],
+  imports: [RouterLink, ProgressBarComponent, FlagQuestionDialogComponent],
   template: `
     <div class="quiz">
       <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -64,7 +65,20 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
           />
 
           <div class="question-card">
-            <span class="question-number">Question {{ currentIndex() + 1 }} of {{ questions().length }}</span>
+            <div class="question-header">
+              <span class="question-number">Question {{ currentIndex() + 1 }} of {{ questions().length }}</span>
+              <button
+                type="button"
+                class="flag-btn"
+                aria-label="Flag this question"
+                (click)="showFlagDialog.set(true)"
+              >
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                  <line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
+              </button>
+            </div>
             <h2>{{ q.question }}</h2>
 
             <div class="options" role="radiogroup" aria-label="Answer options">
@@ -102,6 +116,16 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
               </button>
             }
           </div>
+
+          @if (showFlagDialog()) {
+            <app-flag-question-dialog
+              [contentText]="q.question"
+              [contentId]="q.id"
+              [contextTitle]="topic()?.title ?? 'Unknown'"
+              [ruleReference]="q.ruleReference"
+              (closed)="showFlagDialog.set(false)"
+            />
+          }
         </div>
       } @else {
         <p>Quiz not found.</p>
@@ -144,10 +168,36 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
       }
     }
 
+    .question-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
     .question-number {
       font-size: var(--font-size-sm);
       color: var(--color-text-muted);
       font-weight: 600;
+    }
+
+    .flag-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xs);
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: color 0.15s, background-color 0.15s;
+      min-width: var(--touch-target);
+      min-height: var(--touch-target);
+
+      &:hover {
+        color: var(--color-error);
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+      }
     }
 
     .options {
@@ -342,6 +392,7 @@ export class QuizComponent implements OnInit {
   protected readonly answered = signal(false);
   protected readonly answers = signal<number[]>([]);
   protected readonly showResults = signal(false);
+  protected readonly showFlagDialog = signal(false);
 
   protected readonly optionLetters = ['A', 'B', 'C', 'D'];
 
@@ -408,6 +459,7 @@ export class QuizComponent implements OnInit {
       this.currentIndex.set(nextIdx);
       this.selectedOption.set(-1);
       this.answered.set(false);
+      this.showFlagDialog.set(false);
     }
   }
 
@@ -422,5 +474,6 @@ export class QuizComponent implements OnInit {
     this.answered.set(false);
     this.answers.set([]);
     this.showResults.set(false);
+    this.showFlagDialog.set(false);
   }
 }

@@ -1,0 +1,509 @@
+import { GlossaryTerm } from '../models/glossary';
+
+export const GLOSSARY_TERMS_7_8: GlossaryTerm[] = [
+  {
+    id: 'actively-absorbing',
+    term: 'Actively Absorbing',
+    definition:
+      'Moving toward someone who is about to hit you, but only to protect yourself, not to hit them back.',
+    relatedTerms: ['counter-block', 'forceful-contact'],
+  },
+  {
+    id: 'ahead',
+    term: 'Ahead',
+    definition:
+      'Closer in the counterclockwise direction (the way skaters go around the track). If you are ahead of someone, you are in front of them on the track.',
+    relatedTerms: ['behind'],
+  },
+  {
+    id: 'alternate',
+    term: 'Alternate',
+    definition:
+      'A person chosen by the Captain to help speak for the team. They wear a letter "A" on their uniform. The Alternate can be a teammate, coach, or manager.',
+    relatedTerms: ['captain'],
+  },
+  {
+    id: 'apex-jump',
+    term: 'Apex Jump',
+    definition:
+      'Jumping over the inside corner of the track to take a shortcut. The skater must land back inside the track lines.',
+    relatedTerms: ['in-bounds'],
+  },
+  {
+    id: 'assist',
+    term: 'Assist',
+    definition:
+      'Helping a teammate by touching them. A push or a whip are common examples.',
+    relatedTerms: ['engaging', 'initiator'],
+    ruleReferences: ['2.4'],
+  },
+  {
+    id: 'behind',
+    term: 'Behind',
+    definition:
+      'Closer in the clockwise direction (the opposite way skaters go). If you are behind someone, they are in front of you on the track.',
+    relatedTerms: ['ahead'],
+  },
+  {
+    id: 'blocker',
+    term: 'Blocker',
+    definition:
+      'A skater who is part of the Pack. Each team can have up to four Blockers in a Jam. One of them can be the Pivot.',
+    relatedTerms: ['pack', 'pivot', 'jammer', 'role'],
+    ruleReferences: ['2.2'],
+  },
+  {
+    id: 'blocking-zones',
+    term: 'Blocking Zones',
+    definition:
+      'The parts of your body you are allowed to use to hit another skater. You can use your torso, upper arms, and upper legs.',
+    relatedTerms: ['target-zones', 'forceful-contact'],
+  },
+  {
+    id: 'captain',
+    term: 'Captain',
+    definition:
+      'The skater who speaks for the team. They wear a letter "C" on their uniform. If the Captain leaves the game, the team can pick a new one by telling the Head Referee.',
+    relatedTerms: ['alternate'],
+  },
+  {
+    id: 'ceding',
+    term: 'Ceding',
+    definition:
+      'Giving back a position you should not have gained. If you come back onto the track illegally, you must go fully off the track and then come back on properly.',
+    relatedTerms: ['out-of-bounds', 'out-of-bounds-fully', 'straddling'],
+  },
+  {
+    id: 'counter-block',
+    term: 'Counter-Block',
+    definition:
+      'Pushing back against someone who is blocking you. A counter-block counts as a block, so the same rules apply.',
+    relatedTerms: ['actively-absorbing', 'initiator'],
+  },
+  {
+    id: 'designated-chaperone',
+    term: 'Designated Chaperone',
+    definition:
+      'An adult chosen to look after a team during the game. They are picked at the meeting before the game starts.',
+  },
+  {
+    id: 'down',
+    term: 'Down',
+    definition:
+      'When any part of your body or gear (other than your skates) is touching the floor. Touching the floor with just one hand does not count as being down.',
+    relatedTerms: ['upright', 'standing', 'falling-small'],
+  },
+  {
+    id: 'engagement-zone',
+    term: 'Engagement Zone',
+    definition:
+      'The area around the Pack where Blockers are allowed to block. It goes 20 feet in front of and 20 feet behind the Pack.',
+    relatedTerms: ['in-play', 'pack', 'pack-skater'],
+  },
+  {
+    id: 'engaging',
+    term: 'Engaging',
+    definition: 'Any time you interact with another skater on the track during a Jam.',
+    relatedTerms: ['assist', 'blocking-zones'],
+    ruleReferences: ['2.4'],
+  },
+  {
+    id: 'established-position',
+    term: 'Established Position',
+    definition:
+      'Where a skater is on the track right now. For example, whether they are standing up, In Bounds, Down, or Out of Bounds.',
+    relatedTerms: ['in-bounds', 'down', 'out-of-bounds', 'in-play', 'out-of-play'],
+  },
+  {
+    id: 'exiting-the-track',
+    term: 'Exiting the Track',
+    definition: 'Leaving the track to the outside to go to the Penalty Box.',
+  },
+  {
+    id: 'expulsion',
+    term: 'Expulsion',
+    definition:
+      'When the Head Referee removes a skater or team staff from the rest of the game for doing something very dangerous or violent.',
+    relatedTerms: ['fouling-out', 'head-referee'],
+  },
+  {
+    id: 'falling-small',
+    term: 'Falling Small',
+    definition:
+      'Falling down with your arms and legs tucked close to your body, not spread out or flailing.',
+    relatedTerms: ['down'],
+  },
+  {
+    id: 'forceful-contact',
+    term: 'Forceful Contact',
+    definition:
+      'A hard hit or strike. It is contact that could hurt someone or knock them off balance, slow them down, or change their direction.',
+    relatedTerms: ['blocking-zones', 'target-zones'],
+  },
+  {
+    id: 'fouling-out',
+    term: 'Fouling Out',
+    definition:
+      'When a skater gets seven penalties in one game, they are removed from the rest of the game.',
+    relatedTerms: ['penalty', 'expulsion'],
+  },
+  {
+    id: 'governing-body',
+    term: 'Governing Body',
+    definition:
+      'The group in charge of running the game. This could be a league, a tournament, or another organiser.',
+  },
+  {
+    id: 'grasping',
+    term: 'Grasping',
+    definition:
+      'Actively holding on to something, like grabbing a teammate\'s uniform or holding hands.',
+    relatedTerms: ['linking'],
+  },
+  {
+    id: 'head-referee',
+    term: 'Head Referee',
+    definition:
+      'The referee who is in charge of the whole game. They have the final say on all decisions.',
+    relatedTerms: ['expulsion'],
+  },
+  {
+    id: 'hips',
+    term: 'Hips',
+    definition:
+      'The widest part of your body between your waist and your thighs. Your hip position is used to work out if you have passed another skater.',
+    relatedTerms: ['pass', 'skating-direction-of-travel'],
+  },
+  {
+    id: 'illegal-procedure',
+    term: 'Illegal Procedure',
+    definition: 'Breaking a rule that is not about contact. It is a technical rule break.',
+    relatedTerms: ['penalty'],
+  },
+  {
+    id: 'immediately',
+    term: 'Immediately',
+    definition: 'As soon as it is safe and legal to do so.',
+  },
+  {
+    id: 'impeding',
+    term: 'Impeding',
+    definition:
+      'Slowing down or changing the direction of an opponent. This can happen in any direction on the track.',
+    relatedTerms: ['positional-blocking'],
+  },
+  {
+    id: 'impenetrable',
+    term: 'Impenetrable',
+    definition:
+      'A wall of skaters that is impossible to get through without someone getting hurt. For example, two skaters with their arms locked around each other so no one can pass between them.',
+    relatedTerms: ['linking', 'grasping'],
+  },
+  {
+    id: 'in-bounds',
+    term: 'In Bounds',
+    definition:
+      'A skater is In Bounds when the only parts of their body touching the floor are on or inside the track lines. Touching the floor outside the line with just one hand still counts as In Bounds.',
+    relatedTerms: ['out-of-bounds', 'straddling'],
+  },
+  {
+    id: 'in-play',
+    term: 'In Play',
+    definition:
+      'A Blocker is In Play when they are In Bounds, standing up, and inside the Engagement Zone. Jammers who are In Bounds and standing up are always In Play.',
+    relatedTerms: ['in-bounds', 'upright', 'engagement-zone', 'out-of-play'],
+  },
+  {
+    id: 'in-position',
+    term: 'In Position',
+    definition:
+      'Being on the track, In Bounds, and in the correct starting spot for your role when the Jam starts.',
+    relatedTerms: ['in-bounds', 'role', 'jam'],
+  },
+  {
+    id: 'in-queue',
+    term: 'In Queue',
+    definition:
+      'Skating with a penalty waiting to be served. This can happen when the Penalty Box is full, or if you are the only Blocker left on the track.',
+    relatedTerms: ['penalty'],
+  },
+  {
+    id: 'initiator',
+    term: 'Initiator',
+    definition:
+      'The skater who starts the contact. If you hit someone or push a teammate, you are the initiator. The initiator is always responsible for making sure the contact is legal.',
+    relatedTerms: ['assist', 'counter-block'],
+  },
+  {
+    id: 'insubordination',
+    term: 'Insubordination',
+    definition:
+      'Not listening to what an official tells you to do, or breaking rules on purpose.',
+  },
+  {
+    id: 'jam',
+    term: 'Jam',
+    definition:
+      'One round of play. A Jam can last up to two minutes. The game is made up of many Jams.',
+    relatedTerms: ['lineup-time'],
+  },
+  {
+    id: 'jammer',
+    term: 'Jammer',
+    definition:
+      'The skater who scores points for their team. They wear a helmet cover with stars on it.',
+    relatedTerms: ['blocker', 'pivot', 'role', 'the-star', 'lead-jammer'],
+    ruleReferences: ['2.2'],
+  },
+  {
+    id: 'lap-lapping',
+    term: 'Lap / Lapping',
+    definition:
+      'When a skater passes the same opponent twice in a row. If the Jammer passes someone but it was not earned, they can pass that person again to score the point.',
+    relatedTerms: ['pass', 're-pass'],
+  },
+  {
+    id: 'lead-jammer',
+    term: 'Lead Jammer',
+    definition:
+      'The first Jammer to get past all the Blockers and out the front of the Pack. The Lead Jammer can call off the Jam early.',
+    relatedTerms: ['jammer', 'engagement-zone', 'pass'],
+  },
+  {
+    id: 'linking',
+    term: 'Linking',
+    definition: 'Hooking your arm through a teammate\'s arm at the elbow.',
+    relatedTerms: ['grasping', 'impenetrable'],
+  },
+  {
+    id: 'lineup-time',
+    term: 'Lineup Time',
+    definition:
+      'The short break between Jams. It lasts up to 30 seconds. The game clock keeps running during this time.',
+    relatedTerms: ['jam'],
+  },
+  {
+    id: 'no-impact',
+    term: 'No Impact',
+    definition:
+      'When a rule is broken but it barely affects safety or the game. No penalty is given.',
+    relatedTerms: ['penalty'],
+  },
+  {
+    id: 'no-pack',
+    term: 'No Pack',
+    definition:
+      'When the Blockers from both teams are not close enough together to form a Pack. Blockers must be within 10 feet of each other to be a Pack.',
+    relatedTerms: ['pack'],
+  },
+  {
+    id: 'not-on-the-track-point',
+    term: 'Not-On-the-Track (NOTT) Point',
+    definition:
+      'A bonus point the Jammer gets for opponents who are not on the track, like skaters in the Penalty Box. The Jammer earns these as soon as they pass any opposing Blocker.',
+    relatedTerms: ['trip-through-the-pack', 'pass', 'jammer'],
+  },
+  {
+    id: 'out-of-bounds',
+    term: 'Out of Bounds',
+    definition:
+      'A skater is Out of Bounds when part of their body or gear is touching the floor outside the track lines. Touching outside with just one hand does not count as Out of Bounds.',
+    relatedTerms: ['in-bounds', 'straddling', 'ceding', 'out-of-bounds-fully'],
+  },
+  {
+    id: 'out-of-bounds-fully',
+    term: 'Out of Bounds (Fully)',
+    definition:
+      'When a skater is completely outside the track, with no part of their body or gear touching the track at all.',
+    relatedTerms: ['out-of-bounds', 'in-bounds', 'straddling'],
+  },
+  {
+    id: 'out-of-play',
+    term: 'Out of Play',
+    definition:
+      'A Blocker who is In Bounds but outside the Engagement Zone. They are too far from the Pack to block or be blocked.',
+    relatedTerms: ['in-play', 'engagement-zone', 'no-pack'],
+  },
+  {
+    id: 'pack',
+    term: 'Pack',
+    definition:
+      'The biggest group of Blockers from both teams skating close together, within 10 feet of each other. Jammers are not part of the Pack.',
+    relatedTerms: ['blocker', 'no-pack', 'pack-skater', 'engagement-zone'],
+  },
+  {
+    id: 'pack-skater',
+    term: 'Pack Skater',
+    definition: 'Any Blocker who is part of the Pack.',
+    relatedTerms: ['pack', 'blocker'],
+  },
+  {
+    id: 'pass',
+    term: 'Pass',
+    definition:
+      'When a skater moves past another skater on the track. Jammers earn passes to score points.',
+    relatedTerms: ['hips', 'lap-lapping', 're-pass', 'not-on-the-track-point'],
+    ruleReferences: ['2.5'],
+  },
+  {
+    id: 'passing-the-star',
+    term: 'Passing the Star',
+    definition:
+      'When the Jammer hands their star helmet cover to the Pivot. The Pivot then becomes the new Jammer.',
+    relatedTerms: ['the-star', 'jammer', 'pivot'],
+  },
+  {
+    id: 'penalty',
+    term: 'Penalty',
+    definition:
+      'A punishment for breaking a rule. The skater must sit in the Penalty Box for 30 seconds.',
+    relatedTerms: ['no-impact', 'fouling-out', 'expulsion'],
+  },
+  {
+    id: 'pivot',
+    term: 'Pivot',
+    definition:
+      'A special Blocker who wears a helmet cover with a stripe. The Pivot can become the Jammer if the star is passed to them.',
+    relatedTerms: ['blocker', 'the-stripe', 'passing-the-star', 'role'],
+    ruleReferences: ['2.2.3'],
+  },
+  {
+    id: 'points-awarded-in-error',
+    term: 'Points Awarded in Error',
+    definition:
+      'Points that were added to a team\'s score by mistake. The Jammer did not really earn them.',
+    relatedTerms: ['points-denied-in-error'],
+  },
+  {
+    id: 'points-denied-in-error',
+    term: 'Points Denied in Error',
+    definition:
+      'Points that a Jammer did earn, but were not added to the score by mistake.',
+    relatedTerms: ['points-awarded-in-error'],
+  },
+  {
+    id: 'positional-blocking',
+    term: 'Positional Blocking',
+    definition:
+      'Blocking without touching anyone. You just move your body into the way so the other skater cannot get past.',
+    relatedTerms: ['impeding'],
+  },
+  {
+    id: 'protective-gear',
+    term: 'Protective Gear',
+    definition:
+      'Safety equipment that skaters must wear: a helmet, mouthguard, wrist guards, elbow pads, and knee pads.',
+  },
+  {
+    id: 're-pass',
+    term: 'Re-Pass',
+    definition:
+      'Passing someone you have already passed on the same lap. This is useful if the first pass did not count.',
+    relatedTerms: ['pass', 'lap-lapping'],
+  },
+  {
+    id: 'relative-position',
+    term: 'Relative Position',
+    definition:
+      'Where you are compared to other skaters. You gain position by moving ahead of someone, and lose it by being knocked down or going out of bounds.',
+    relatedTerms: ['in-bounds', 'upright', 'yielding'],
+  },
+  {
+    id: 'role',
+    term: 'Role',
+    definition:
+      'Each skater has one job: Jammer, Pivot, or Blocker. The Jammer role can be given to the Pivot once per Jam by passing the star.',
+    relatedTerms: ['jammer', 'pivot', 'blocker', 'passing-the-star'],
+  },
+  {
+    id: 'roster',
+    term: 'Roster',
+    definition:
+      'The list of all skaters on a team who can play in the game, along with their numbers.',
+  },
+  {
+    id: 'sitting',
+    term: 'Sitting',
+    definition: 'When a skater is sitting fully on a chair or bench.',
+    relatedTerms: ['standing', 'down'],
+  },
+  {
+    id: 'skating-direction-of-travel',
+    term: 'Skating - Direction of Travel',
+    definition:
+      'The direction a skater is moving. This is usually counterclockwise around the track. If the skater\'s feet are going different ways, the direction is decided by where the hips are going.',
+    relatedTerms: ['hips'],
+  },
+  {
+    id: 'standing',
+    term: 'Standing',
+    definition:
+      'Holding your weight on your skates so that you are not down and everyone can see you are not sitting.',
+    relatedTerms: ['down', 'sitting', 'upright'],
+  },
+  {
+    id: 'stopped',
+    term: 'Stopped',
+    definition: 'Not moving at all on your skates.',
+  },
+  {
+    id: 'straddling',
+    term: 'Straddling',
+    definition:
+      'When a skater has part of their body on the track and part outside the track line at the same time. A straddling skater counts as Out of Bounds.',
+    relatedTerms: ['in-bounds', 'out-of-bounds'],
+  },
+  {
+    id: 'substitution',
+    term: 'Substitution',
+    definition: 'Swapping a skater on the track or in the Penalty Box with a teammate.',
+  },
+  {
+    id: 'target-zones',
+    term: 'Target Zones',
+    definition:
+      'The parts of another skater\'s body that you are allowed to hit when blocking. These are the chest, sides, arms, hips, and upper legs.',
+    relatedTerms: ['blocking-zones', 'forceful-contact'],
+  },
+  {
+    id: 'the-star',
+    term: 'The Star',
+    definition:
+      'The Jammer\'s helmet cover. It has two stars on it, one on each side.',
+    relatedTerms: ['jammer', 'passing-the-star', 'the-stripe'],
+  },
+  {
+    id: 'the-stripe',
+    term: 'The Stripe',
+    definition:
+      'The Pivot\'s helmet cover. It has one long stripe down the middle.',
+    relatedTerms: ['pivot', 'the-star'],
+  },
+  {
+    id: 'trip-through-the-pack',
+    term: 'Trip Through the Pack',
+    definition:
+      'Each time the Jammer skates through the Pack. Each trip is a chance to score points.',
+    relatedTerms: ['jammer', 'pack', 'not-on-the-track-point'],
+    ruleReferences: ['3'],
+  },
+  {
+    id: 'upright',
+    term: 'Upright',
+    definition: 'Any skater who is not down. You are upright if you are on your skates.',
+    relatedTerms: ['down', 'standing', 'in-play'],
+  },
+  {
+    id: 'warning',
+    term: 'Warning',
+    definition:
+      'When an official tells a skater out loud that they are doing something wrong, so the skater can fix it.',
+  },
+  {
+    id: 'yielding',
+    term: 'Yielding',
+    definition:
+      'Letting nearby skaters move ahead of you. If the rules say you must yield, you have to give other skaters time to get in front of you.',
+    relatedTerms: ['relative-position'],
+  },
+];

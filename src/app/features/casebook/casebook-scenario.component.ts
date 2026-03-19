@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { RouterLink } from '@angular/router';
 import { CasebookService } from '../../services/casebook.service';
 import { ProgressService } from '../../services/progress.service';
+import { FlagQuestionDialogComponent } from '../../shared/components/flag-question-dialog/flag-question-dialog.component';
 
 @Component({
   selector: 'app-casebook-scenario',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, FlagQuestionDialogComponent],
   template: `
     <div class="scenario">
       <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -17,7 +18,20 @@ import { ProgressService } from '../../services/progress.service';
 
       @if (scenario(); as s) {
         <div class="scenario-card">
-          <span class="rule-ref">Rule {{ s.ruleReference }}</span>
+          <div class="scenario-header">
+            <span class="rule-ref">Rule {{ s.ruleReference }}</span>
+            <button
+              type="button"
+              class="flag-btn"
+              aria-label="Flag this scenario"
+              (click)="showFlagDialog.set(true)"
+            >
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                <line x1="4" y1="22" x2="4" y2="15"/>
+              </svg>
+            </button>
+          </div>
           <h1>Scenario</h1>
           <p class="situation">{{ s.situation }}</p>
 
@@ -79,6 +93,16 @@ import { ProgressService } from '../../services/progress.service';
             </div>
           }
         </div>
+
+        @if (showFlagDialog()) {
+          <app-flag-question-dialog
+            [contentText]="s.situation"
+            [contentId]="s.id"
+            [contextTitle]="'Casebook Scenario'"
+            [ruleReference]="s.ruleReference"
+            (closed)="showFlagDialog.set(false)"
+          />
+        }
       } @else {
         <p>Scenario not found.</p>
         <a routerLink="/casebook">Back to Casebook</a>
@@ -115,11 +139,37 @@ import { ProgressService } from '../../services/progress.service';
       box-shadow: var(--shadow-sm);
     }
 
+    .scenario-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
     .rule-ref {
       font-family: var(--font-heading);
       font-weight: 700;
       font-size: var(--font-size-sm);
       color: var(--color-primary);
+    }
+
+    .flag-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xs);
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: color 0.15s, background-color 0.15s;
+      min-width: var(--touch-target);
+      min-height: var(--touch-target);
+
+      &:hover {
+        color: var(--color-error);
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+      }
     }
 
     h1 {
@@ -250,12 +300,14 @@ export class CasebookScenarioComponent {
 
   protected readonly selectedChoice = signal(-1);
   protected readonly revealed = signal(false);
+  protected readonly showFlagDialog = signal(false);
 
   constructor() {
     effect(() => {
       this.scenarioId();
       this.selectedChoice.set(-1);
       this.revealed.set(false);
+      this.showFlagDialog.set(false);
     });
   }
 

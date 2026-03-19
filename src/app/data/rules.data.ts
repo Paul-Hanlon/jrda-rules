@@ -35,7 +35,7 @@ export const RULE_SECTIONS: RuleSection[] = [
             number: '1.1.2',
             title: 'Period Timing',
             content:
-              'A period starts on the Jam-Starting Whistle of the first Jam. The period clock does not stop between Jams unless a timeout is called. If the clock reaches zero before the next Jam starts, the period ends.',
+              'A period starts on the Jam-Starting Whistle of the first Jam. The period clock does not stop between Jams unless a timeout is called. If the period clock reaches zero before the next Jam has started, the period ends at that moment; otherwise, the period ends at the conclusion of the final Jam for the period.',
             skillLevels: ALL_LEVELS,
           },
           {
@@ -115,7 +115,7 @@ export const RULE_SECTIONS: RuleSection[] = [
             number: '1.3.1',
             title: 'Team Timeouts',
             content:
-              'Each team may take three timeouts during the game. Team Timeouts may only be requested by the Captain or Alternate and last for 60 seconds.',
+              'Each team may take three timeouts during the game. Team Timeouts may only be requested by the Captain or Alternate. Captains or Alternates currently serving a penalty cannot request a Team Timeout. Team Timeouts last for 60 seconds.',
             skillLevels: ALL_LEVELS,
           },
           {
@@ -236,7 +236,7 @@ export const RULE_SECTIONS: RuleSection[] = [
             number: '2.2.4',
             title: 'Passing the Star',
             content:
-              'A Jammer may transfer the Jammer role to their team\'s Pivot by handing the Star to the Pivot while both are Upright, In Bounds, In Play, and not en route to the Penalty Box. An illegal Star Pass results in both Skaters retaining their existing roles.',
+              'A Jammer may transfer the Jammer role to their team\'s Pivot by handing the Star to the Pivot while both are Upright, In Bounds, In Play, and while neither Skater is en route to, or In Queue for, the Penalty Box. An illegal Star Pass results in both Skaters retaining their existing roles.',
             skillLevels: ALL_LEVELS,
           },
           {
@@ -368,7 +368,7 @@ export const RULE_SECTIONS: RuleSection[] = [
         number: '3.2',
         title: 'Scoring Trips',
         content:
-          'Points are grouped by trips through the Pack. A trip ends and the next begins when the Jammer exits the front of the Engagement Zone. A trip\'s score is final once completed.',
+          'Points are grouped by trips through the Pack. A trip ends and the next begins when the Jammer exits the front of the Engagement Zone (or, if no Pack can be defined, when the Jammer is more than 20 ft ahead of the foremost in-bounds member of the previous Pack). A trip\'s score is final once completed.',
         skillLevels: ALL_LEVELS,
         subrules: [
           {
@@ -578,7 +578,7 @@ export const RULE_SECTIONS: RuleSection[] = [
         number: '4.5',
         title: 'Fouling Out & Expulsions',
         content:
-          'When seven penalties are recorded for a Skater, that Skater fouls out of the game. Expulsions remove a Skater or Team Staff member for a sufficiently dangerous or unsporting act. A substitute must serve the penalty for an expelled Skater.',
+          'When seven penalties are recorded for a Skater, that Skater fouls out of the game. This includes penalties assessed to a Skater on behalf of someone else. Expulsions remove a Skater or Team Staff member for a sufficiently dangerous or unsporting act. A substitute must serve the penalty for an expelled Skater.',
         skillLevels: ALL_LEVELS,
         jrdaAddendum:
           'J4.5.1: A removed JRDA skater must report to the Designated Chaperone and may not be forced to leave the competition area unsupervised. The skater must remain in the venue accompanied by an adult.',

@@ -9,6 +9,7 @@ import { SKILL_LEVELS } from '../../../data/skill-levels.data';
   template: `
     <fieldset class="level-selector" role="radiogroup" aria-label="Skill level">
       <legend class="visually-hidden">Select your skill level</legend>
+      <span class="label" aria-hidden="true">Level</span>
       @for (info of levels; track info.level) {
         <button
           type="button"
@@ -26,9 +27,19 @@ import { SKILL_LEVELS } from '../../../data/skill-levels.data';
   styles: `
     .level-selector {
       display: flex;
+      align-items: center;
       gap: var(--space-xs);
       border: none;
       padding: 0;
+    }
+
+    .label {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     button {
