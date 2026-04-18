@@ -1,128 +1,185 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CasebookService } from '../../services/casebook.service';
 import { ProgressService } from '../../services/progress.service';
+import { IconComponent } from '../../shared/components/icon/icon.component';
+import { CasebookScenario } from '../../models/casebook';
 
-interface SectionInfo {
-  id: string;
-  title: string;
-  icon: string;
+interface ScenarioRowVM {
+  scenario: CasebookScenario;
+  index: number;
+  caseTag: string;
+  solved: boolean;
 }
 
 @Component({
   selector: 'app-casebook-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, IconComponent],
   template: `
-    <div class="casebook-list">
-      <h1>Casebook</h1>
-      <p class="intro">
-        Work through real game scenarios. Pick the right call and learn why!
-      </p>
+    <section class="casebook-list">
+      <header class="page-head">
+        <div class="kicker">Real game scenarios</div>
+        <h1>Casebook</h1>
+        <p class="intro">
+          What's the right call? Work through real situations from the JRDA casebook.
+        </p>
+      </header>
 
-      @for (section of sections; track section.id) {
-        @if (getScenarios(section.id); as scenarios) {
-          @if (scenarios.length > 0) {
-            <section class="section-group">
-              <h2>
-                <span aria-hidden="true">{{ section.icon }}</span>
-                {{ section.title }}
-              </h2>
-              <div class="scenario-grid">
-                @for (scenario of scenarios; track scenario.id) {
-                  <a
-                    [routerLink]="['/casebook', scenario.id]"
-                    class="scenario-card"
-                    [class.completed]="isCompleted(scenario.id)"
-                  >
-                    <span class="scenario-ref">{{ scenario.ruleReference }}</span>
-                    <p class="scenario-preview">{{ truncate(scenario.situation) }}</p>
-                    @if (isCompleted(scenario.id)) {
-                      <span class="completed-badge" aria-label="Completed">&#10003;</span>
-                    }
-                  </a>
+      <div class="scenario-list">
+        @for (vm of scenarioVMs(); track vm.scenario.id) {
+          <a
+            class="scenario-row"
+            [routerLink]="['/casebook', vm.scenario.id]"
+            [attr.aria-label]="vm.caseTag + ' — Rule ' + vm.scenario.ruleReference"
+          >
+            <span class="case-tag">{{ vm.caseTag }}</span>
+            <div class="body">
+              <div class="badge-row">
+                <span class="chip chip-ink">Rule {{ vm.scenario.ruleReference }}</span>
+                @if (vm.solved) {
+                  <span class="chip chip-success">
+                    <app-icon name="check" [size]="12" [strokeWidth]="3" />
+                    Solved
+                  </span>
                 }
               </div>
-            </section>
-          }
+              <p class="situation">{{ vm.scenario.situation }}</p>
+            </div>
+            <app-icon name="arrow-right" [size]="22" [strokeWidth]="2.2" />
+          </a>
         }
-      }
-    </div>
+
+        @if (scenarioVMs().length === 0) {
+          <p class="empty">No scenarios yet. Check back soon.</p>
+        }
+      </div>
+    </section>
   `,
   styles: `
     .casebook-list {
       display: flex;
       flex-direction: column;
-      gap: var(--space-xl);
+      gap: var(--space-lg);
     }
 
-    h1 {
-      font-size: var(--font-size-2xl);
+    .page-head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
       color: var(--color-primary);
+    }
+
+    .page-head h1 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      margin: 0;
     }
 
     .intro {
       color: var(--color-text-secondary);
+      margin: 0;
     }
 
-    .section-group h2 {
-      font-size: var(--font-size-lg);
-      margin-bottom: var(--space-md);
-      display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-    }
-
-    .scenario-grid {
+    .scenario-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: var(--space-md);
+      gap: 14px;
     }
 
-    .scenario-card {
+    .scenario-row {
       display: flex;
-      flex-direction: column;
-      gap: var(--space-sm);
-      padding: var(--space-lg);
+      align-items: flex-start;
+      gap: 16px;
+      padding: 18px 20px;
       background: var(--color-surface);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-      text-decoration: none;
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-hard);
       color: var(--color-text);
-      position: relative;
-      transition: box-shadow 0.15s, transform 0.15s;
+      text-decoration: none;
+      transition: transform 0.08s, box-shadow 0.08s;
 
       &:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
+        transform: translate(1px, 1px);
+        box-shadow: 0 1px 0 rgba(11, 16, 38, 0.9);
         text-decoration: none;
       }
-
-      &.completed {
-        border-left: 3px solid var(--color-success);
-      }
     }
 
-    .scenario-ref {
-      font-family: var(--font-heading);
+    .case-tag {
+      flex-shrink: 0;
+      margin-top: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: var(--radius-chip);
+      font-family: var(--font-display);
       font-weight: 700;
-      font-size: var(--font-size-sm);
-      color: var(--color-primary);
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: var(--stroke) solid var(--color-text);
+      white-space: nowrap;
     }
 
-    .scenario-preview {
-      font-size: var(--font-size-sm);
-      color: var(--color-text-secondary);
-      line-height: 1.5;
+    .chip-ink {
+      background: var(--color-text);
+      color: var(--color-accent);
     }
 
-    .completed-badge {
-      position: absolute;
-      top: var(--space-md);
-      right: var(--space-md);
-      color: var(--color-success);
-      font-size: var(--font-size-lg);
-      font-weight: 700;
+    .chip-success {
+      background: var(--color-success);
+      color: #fff;
+    }
+
+    .situation {
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: var(--color-text);
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
     }
   `,
 })
@@ -130,22 +187,14 @@ export class CasebookListComponent {
   private readonly casebookService = inject(CasebookService);
   private readonly progressService = inject(ProgressService);
 
-  protected readonly sections: SectionInfo[] = [
-    { id: 'gameplay', title: 'Gameplay', icon: '\u{1F6DE}' },
-    { id: 'scoring', title: 'Scoring', icon: '\u{1F3C6}' },
-    { id: 'penalties', title: 'Penalties', icon: '\u26A0\uFE0F' },
-    { id: 'officiating', title: 'Officiating', icon: '\u{1F3C1}' },
-  ];
-
-  protected getScenarios(sectionId: string) {
-    return this.casebookService.scenariosBySection().get(sectionId) ?? [];
-  }
-
-  protected isCompleted(scenarioId: string): boolean {
-    return this.progressService.progress().completedScenarioIds.includes(scenarioId);
-  }
-
-  protected truncate(text: string): string {
-    return text.length > 120 ? text.slice(0, 120) + '...' : text;
-  }
+  protected readonly scenarioVMs = computed<ScenarioRowVM[]>(() => {
+    const scenarios = this.casebookService.scenarios();
+    const solvedIds = this.progressService.progress().completedScenarioIds;
+    return scenarios.map((scenario, index) => ({
+      scenario,
+      index,
+      caseTag: `Case ${String(index + 1).padStart(2, '0')}`,
+      solved: solvedIds.includes(scenario.id),
+    }));
+  });
 }

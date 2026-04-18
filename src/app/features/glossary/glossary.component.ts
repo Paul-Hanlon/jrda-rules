@@ -1,99 +1,157 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { GlossaryService } from '../../services/glossary.service';
 import { ProgressService } from '../../services/progress.service';
+import { IconComponent } from '../../shared/components/icon/icon.component';
+import { TrackOvalComponent } from '../../shared/components/track-oval/track-oval.component';
 import { GlossaryTerm } from '../../models/glossary';
+
+type Mode = 'list' | 'flash';
 
 @Component({
   selector: 'app-glossary',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconComponent, TrackOvalComponent],
   template: `
     <div class="glossary">
-      <h1>Glossary</h1>
-      <p class="intro">Learn roller derby terminology. Search for a term or practice with flashcards.</p>
+      <header class="page-head">
+        <div class="kicker">Vocabulary</div>
+        <h1>Glossary</h1>
+        <p class="intro">
+          Learn the language of derby — search or flashcard yourself.
+        </p>
+      </header>
 
-      <div class="controls">
-        <div class="search-box">
-          <label for="search-input" class="visually-hidden">Search terms</label>
+      <div class="toolbar">
+        <label class="search">
+          <span class="search-icon" aria-hidden="true">
+            <app-icon name="search" [size]="18" [strokeWidth]="2.2" />
+          </span>
+          <span class="visually-hidden">Search terms</span>
           <input
-            id="search-input"
             type="search"
-            placeholder="Search terms..."
+            placeholder="Search terms…"
             [value]="glossaryService.searchQuery()"
             (input)="onSearch($event)"
+            aria-label="Search terms"
           />
-        </div>
+        </label>
+
         <button
-          class="mode-btn"
-          [class.active]="flashcardMode()"
-          (click)="toggleFlashcardMode()"
+          type="button"
+          class="pill"
+          [class.pill-primary]="mode() === 'flash'"
+          [class.pill-ghost]="mode() !== 'flash'"
+          (click)="toggleMode()"
         >
-          {{ flashcardMode() ? 'List View' : 'Flashcard Mode' }}
+          <app-icon name="flip" [size]="16" [strokeWidth]="2.4" />
+          {{ mode() === 'flash' ? 'List view' : 'Flashcards' }}
         </button>
       </div>
 
-      @if (flashcardMode()) {
-        @if (currentCard(); as card) {
-          <div class="flashcard-container">
-            <div
-              class="flashcard"
-              [class.flipped]="cardFlipped()"
-              (click)="flipCard()"
-              (keydown.enter)="flipCard()"
-              (keydown.space)="flipCard()"
-              tabindex="0"
-              role="button"
-              [attr.aria-label]="cardFlipped() ? 'Definition: ' + card.definition : 'Term: ' + card.term + '. Press to reveal definition.'"
-            >
-              <div class="card-front">
-                <span class="card-label">Term</span>
-                <h2>{{ card.term }}</h2>
-                <span class="card-hint">Tap to reveal</span>
-              </div>
-              <div class="card-back">
-                <span class="card-label">Definition</span>
-                <p>{{ card.definition }}</p>
-              </div>
-            </div>
-
-            <div class="flashcard-actions">
-              <button class="action-btn study" (click)="nextCard(false)">Study More</button>
-              <button class="action-btn know" (click)="nextCard(true)">Got It!</button>
-            </div>
-
-            <p class="card-count" aria-live="polite">
-              Card {{ cardIndex() + 1 }} of {{ flashcardDeck().length }}
-            </p>
-          </div>
-        } @else {
-          <p class="empty-state">All terms mastered! Great job!</p>
-        }
-      } @else {
-        <div class="terms-list" role="list">
-          @for (term of glossaryService.filteredTerms(); track term.id) {
-            <div class="term-card" role="listitem">
+      @if (mode() === 'list') {
+        @let results = filteredTerms();
+        <div class="list" role="list">
+          @for (t of results; track t.id) {
+            @let open = expanded() === t.id;
+            @let viewed = isViewed(t.id);
+            <div class="term-card" role="listitem" [class.open]="open">
               <button
+                type="button"
                 class="term-header"
-                (click)="toggleTerm(term.id)"
-                [attr.aria-expanded]="expandedTerm() === term.id"
+                (click)="toggleTerm(t)"
+                [attr.aria-expanded]="open"
+                [attr.aria-controls]="'term-body-' + t.id"
               >
-                <h2>{{ term.term }}</h2>
-                @if (isMastered(term.id)) {
-                  <span class="mastered-badge" aria-label="Mastered">&#10003;</span>
+                <span class="term-name">{{ t.term }}</span>
+                @if (viewed) {
+                  <span class="viewed" aria-label="Viewed">
+                    <app-icon name="check" [size]="16" [strokeWidth]="3" />
+                  </span>
                 }
+                <app-icon
+                  [name]="open ? 'chev-up' : 'chev-down'"
+                  [size]="16"
+                  [strokeWidth]="2.2"
+                />
               </button>
-              @if (expandedTerm() === term.id) {
-                <div class="term-content">
-                  <p>{{ term.definition }}</p>
-                  @if (term.ruleReferences?.length) {
-                    <div class="references">
-                      <strong>Rules:</strong> {{ term.ruleReferences!.join(', ') }}
-                    </div>
+
+              @if (open) {
+                <div [id]="'term-body-' + t.id" class="term-body">
+                  <p>{{ t.definition }}</p>
+                  @if (t.ruleReferences?.length) {
+                    <div class="refs">Rules: {{ t.ruleReferences!.join(', ') }}</div>
                   }
                 </div>
               }
             </div>
-          } @empty {
-            <p class="empty-state">No terms match your search.</p>
+          }
+
+          @if (results.length === 0) {
+            <p class="empty">No terms match "{{ glossaryService.searchQuery() }}".</p>
+          }
+        </div>
+      } @else {
+        @let total = terms().length;
+        @let card = currentCard();
+        <div class="flash-pane">
+          @if (card) {
+            <div
+              class="flash-frame"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="
+                flipped()
+                  ? 'Definition: ' + card.definition
+                  : 'Term: ' + card.term + '. Activate to reveal definition.'
+              "
+              (click)="flipCard()"
+              (keydown.enter)="flipCard(); $event.preventDefault()"
+              (keydown.space)="flipCard(); $event.preventDefault()"
+            >
+              <div class="flash-inner" [class.flipped]="flipped()">
+                <div class="face face-front">
+                  <app-track-oval style="color: var(--color-primary); opacity: 0.22;" />
+                  <div class="face-body">
+                    <div class="kicker">Term {{ flashIdx() + 1 }} / {{ total }}</div>
+                    <h2>{{ card.term }}</h2>
+                    <div class="hint">Tap to reveal</div>
+                  </div>
+                </div>
+
+                <div class="face face-back" #backFace>
+                  <div class="kicker kicker-accent">Definition</div>
+                  <p>{{ card.definition }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flash-actions">
+              <button type="button" class="pill pill-ghost" (click)="nextCard(false)">
+                <app-icon name="flip" [size]="14" [strokeWidth]="2.4" />
+                Study more
+              </button>
+              <button type="button" class="pill pill-accent" (click)="nextCard(true)">
+                <app-icon name="check" [size]="14" [strokeWidth]="2.4" />
+                Got it!
+              </button>
+            </div>
+          } @else {
+            <div class="flash-frame flash-empty">
+              <div class="face face-front">
+                <div class="face-body">
+                  <h2>No terms yet</h2>
+                  <div class="hint">Check back once the deck is seeded.</div>
+                </div>
+              </div>
+            </div>
           }
         </div>
       }
@@ -106,212 +164,316 @@ import { GlossaryTerm } from '../../models/glossary';
       gap: var(--space-lg);
     }
 
-    h1 {
-      font-size: var(--font-size-2xl);
+    /* Page head */
+    .page-head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
       color: var(--color-primary);
+    }
+
+    .page-head h1 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      margin: 0;
     }
 
     .intro {
       color: var(--color-text-secondary);
+      margin: 0;
     }
 
-    .controls {
+    /* Toolbar */
+    .toolbar {
       display: flex;
-      gap: var(--space-md);
       flex-wrap: wrap;
+      gap: 10px;
+      align-items: stretch;
     }
 
-    .search-box {
+    .search {
+      position: relative;
       flex: 1;
       min-width: 200px;
-
-      input {
-        width: 100%;
-        padding: var(--space-sm) var(--space-md);
-        border: 2px solid var(--color-border);
-        border-radius: var(--radius-sm);
-        font-size: var(--font-size-base);
-        min-height: var(--touch-target);
-
-        &:focus {
-          outline: none;
-          border-color: var(--color-primary);
-          box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
-        }
-      }
+      display: flex;
+      align-items: center;
     }
 
-    .mode-btn {
-      padding: var(--space-sm) var(--space-lg);
-      background: var(--color-secondary);
-      color: #fff;
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      line-height: 0;
+    }
+
+    .search input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      min-height: 48px;
+      border: var(--stroke) solid var(--color-border-strong);
       border-radius: var(--radius-sm);
-      font-weight: 600;
-      min-height: var(--touch-target);
+      background: var(--color-surface);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      color: var(--color-text);
 
-      &:hover {
-        background: var(--color-secondary-light);
-      }
-
-      &.active {
-        background: var(--color-primary);
+      &:focus-visible {
+        outline: 3px solid var(--color-accent);
+        outline-offset: 2px;
       }
     }
 
-    .terms-list {
+    /* Pills (shared by toolbar + flashcard actions) */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      min-height: 48px;
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: var(--shadow-hard);
+      cursor: pointer;
+      transition: transform 0.08s, box-shadow 0.08s;
+
+      &:hover:not(:disabled) {
+        transform: translate(1px, 1px);
+        box-shadow: 0 1px 0 rgba(11, 16, 38, 0.9);
+      }
+    }
+
+    .pill-primary {
+      background: var(--color-primary);
+      color: #fff;
+    }
+
+    .pill-ghost {
+      background: var(--color-surface);
+      color: var(--color-text);
+    }
+
+    .pill-accent {
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+    }
+
+    /* List mode */
+    .list {
       display: flex;
       flex-direction: column;
-      gap: var(--space-sm);
+      gap: 8px;
     }
 
     .term-card {
       background: var(--color-surface);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-sm);
       overflow: hidden;
     }
 
     .term-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 12px;
       width: 100%;
-      padding: var(--space-md) var(--space-lg);
+      padding: 12px 16px;
+      min-height: 48px;
       text-align: left;
-      min-height: var(--touch-target);
-
-      h2 {
-        font-size: var(--font-size-base);
-        font-weight: 600;
-      }
+      background: transparent;
+      border: none;
+      cursor: pointer;
 
       &:hover {
-        background: var(--color-border-light);
+        background: var(--color-surface-alt);
       }
     }
 
-    .mastered-badge {
-      color: var(--color-success);
-      font-size: var(--font-size-lg);
+    .term-name {
+      flex: 1;
+      font-family: var(--font-display);
       font-weight: 700;
+      font-size: 0.9375rem;
+      color: var(--color-text);
+      letter-spacing: -0.005em;
     }
 
-    .term-content {
-      padding: 0 var(--space-lg) var(--space-lg);
-      line-height: 1.7;
+    .viewed {
+      display: inline-flex;
+      align-items: center;
+      color: var(--color-success);
+    }
 
-      .references {
-        margin-top: var(--space-sm);
-        font-size: var(--font-size-sm);
-        color: var(--color-text-muted);
+    .term-body {
+      padding: 0 16px 14px;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+
+      p {
+        margin: 0;
       }
     }
 
-    // Flashcard styles
-    .flashcard-container {
+    .refs {
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .empty {
+      padding: 32px 0;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+    }
+
+    /* Flashcard mode */
+    .flash-pane {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--space-lg);
+      gap: 20px;
+      padding: 20px 0;
     }
 
-    .flashcard {
+    .flash-frame {
       width: 100%;
-      max-width: 500px;
-      min-height: 250px;
-      perspective: 1000px;
+      max-width: 480px;
+      height: 280px;
+      perspective: 1200px;
       cursor: pointer;
+
+      &:focus-visible {
+        outline: 3px solid var(--color-accent);
+        outline-offset: 4px;
+        border-radius: var(--radius-card);
+      }
+    }
+
+    .flash-empty {
+      cursor: default;
+    }
+
+    .flash-inner {
       position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
 
-      .card-front,
-      .card-back {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: var(--space-md);
-        padding: var(--space-xl);
-        background: var(--color-surface);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-md);
-        backface-visibility: hidden;
-        transition: transform 0.5s;
-        text-align: center;
-      }
+    .flash-inner.flipped {
+      transform: rotateY(180deg);
+    }
 
-      .card-front {
-        h2 {
-          font-size: var(--font-size-2xl);
-          color: var(--color-primary);
-        }
-      }
-
-      .card-back {
-        transform: rotateY(180deg);
-
-        p {
-          font-size: var(--font-size-base);
-          line-height: 1.6;
-        }
-      }
-
-      &.flipped {
-        .card-front {
-          transform: rotateY(180deg);
-        }
-        .card-back {
-          transform: rotateY(0);
-        }
+    @media (prefers-reduced-motion: reduce) {
+      .flash-inner {
+        transition: none;
       }
     }
 
-    .card-label {
-      font-size: var(--font-size-xs);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--color-text-muted);
-    }
-
-    .card-hint {
-      font-size: var(--font-size-sm);
-      color: var(--color-text-muted);
-    }
-
-    .flashcard-actions {
+    .face {
+      position: absolute;
+      inset: 0;
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-hard);
+      backface-visibility: hidden;
+      overflow: hidden;
+      padding: 28px;
       display: flex;
-      gap: var(--space-md);
+      flex-direction: column;
+      justify-content: center;
     }
 
-    .action-btn {
-      padding: var(--space-sm) var(--space-xl);
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      min-height: var(--touch-target);
-      color: #fff;
-
-      &.study {
-        background: var(--color-accent);
-        &:hover { background: var(--color-accent-light); }
-      }
-      &.know {
-        background: var(--color-success);
-        &:hover { opacity: 0.9; }
-      }
-    }
-
-    .card-count {
-      font-size: var(--font-size-sm);
-      color: var(--color-text-muted);
-    }
-
-    .empty-state {
+    .face-front {
+      background: var(--color-surface);
+      align-items: center;
       text-align: center;
-      padding: var(--space-2xl);
+    }
+
+    .face-front .face-body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .face-front h2 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 2.5rem;
+      color: var(--color-primary);
+      letter-spacing: -0.02em;
+      margin: 0;
+      line-height: 1;
+    }
+
+    .hint {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
       color: var(--color-text-muted);
-      font-size: var(--font-size-lg);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .face-back {
+      background: var(--color-text);
+      color: var(--color-surface);
+      transform: rotateY(180deg);
+      gap: 10px;
+      justify-content: flex-start;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+    }
+
+    .face-back::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .face-back::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 3px;
+    }
+
+    .kicker-accent {
+      color: var(--color-accent);
+    }
+
+    .face-back p {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .flash-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
   `,
 })
@@ -319,69 +481,68 @@ export class GlossaryComponent {
   protected readonly glossaryService = inject(GlossaryService);
   private readonly progressService = inject(ProgressService);
 
-  protected readonly flashcardMode = signal(false);
-  protected readonly expandedTerm = signal<string | null>(null);
-  protected readonly cardFlipped = signal(false);
-  protected readonly cardIndex = signal(0);
-  protected readonly flashcardDeck = signal<GlossaryTerm[]>([]);
+  protected readonly mode = signal<Mode>('list');
+  protected readonly expanded = signal<string | null>(null);
+  protected readonly flipped = signal(false);
+  protected readonly flashIdx = signal(0);
 
-  protected readonly currentCard = () => {
-    const deck = this.flashcardDeck();
-    const idx = this.cardIndex();
-    return deck[idx] ?? null;
-  };
+  private readonly backFace = viewChild<ElementRef<HTMLElement>>('backFace');
+
+  protected readonly terms = this.glossaryService.allTerms;
+  protected readonly filteredTerms = this.glossaryService.filteredTerms;
+
+  protected readonly currentCard = computed<GlossaryTerm | null>(() => {
+    const list = this.terms();
+    if (!list.length) return null;
+    return list[this.flashIdx() % list.length];
+  });
 
   protected onSearch(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.glossaryService.setSearchQuery(value);
+    this.glossaryService.setSearchQuery((event.target as HTMLInputElement).value);
   }
 
-  protected toggleFlashcardMode(): void {
-    const entering = !this.flashcardMode();
-    this.flashcardMode.set(entering);
-    if (entering) {
-      const mastered = this.progressService.progress().masteredTermIds;
-      this.flashcardDeck.set(this.glossaryService.getRandomTerms(20, mastered));
-      this.cardIndex.set(0);
-      this.cardFlipped.set(false);
-    }
+  protected toggleMode(): void {
+    this.mode.update((m) => (m === 'list' ? 'flash' : 'list'));
+    this.flipped.set(false);
   }
 
-  protected toggleTerm(termId: string): void {
-    if (this.expandedTerm() === termId) {
-      this.expandedTerm.set(null);
-    } else {
-      this.expandedTerm.set(termId);
-      this.progressService.markTermViewed(termId);
+  protected toggleTerm(term: GlossaryTerm): void {
+    if (this.expanded() === term.id) {
+      this.expanded.set(null);
+      return;
     }
+    this.expanded.set(term.id);
+    this.progressService.markTermViewed(term.id);
   }
 
   protected flipCard(): void {
-    this.cardFlipped.update((v) => !v);
+    const willShowBack = !this.flipped();
+    this.flipped.set(willShowBack);
+    if (willShowBack) {
+      const card = this.currentCard();
+      if (card) this.progressService.markTermViewed(card.id);
+      this.resetBackScroll();
+    }
   }
 
   protected nextCard(mastered: boolean): void {
     const card = this.currentCard();
-    if (card) {
-      if (mastered) {
-        this.progressService.markTermMastered(card.id);
-      }
-    }
-    const nextIdx = this.cardIndex() + 1;
-    if (nextIdx < this.flashcardDeck().length) {
-      this.cardIndex.set(nextIdx);
-      this.cardFlipped.set(false);
-    } else {
-      // Reshuffle remaining
-      const mastered2 = this.progressService.progress().masteredTermIds;
-      const remaining = this.glossaryService.getRandomTerms(20, mastered2);
-      this.flashcardDeck.set(remaining);
-      this.cardIndex.set(0);
-      this.cardFlipped.set(false);
-    }
+    if (card && mastered) this.progressService.markTermMastered(card.id);
+    const total = this.terms().length;
+    if (!total) return;
+    this.flashIdx.update((i) => (i + 1) % total);
+    this.flipped.set(false);
+    this.resetBackScroll();
   }
 
-  protected isMastered(termId: string): boolean {
-    return this.progressService.progress().masteredTermIds.includes(termId);
+  private resetBackScroll(): void {
+    queueMicrotask(() => {
+      const el = this.backFace()?.nativeElement;
+      if (el) el.scrollTop = 0;
+    });
+  }
+
+  protected isViewed(termId: string): boolean {
+    return this.progressService.progress().viewedTermIds.includes(termId);
   }
 }

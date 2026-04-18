@@ -1,20 +1,24 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './shared/components/header/header.component';
-import { OnboardingDialogComponent } from './shared/components/onboarding-dialog/onboarding-dialog.component';
+import { OnboardingComponent } from './features/onboarding/onboarding.component';
+import { LandingComponent } from './features/landing/landing.component';
 import { UserProfileService } from './services/user-profile.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent, OnboardingDialogComponent],
+  imports: [RouterOutlet, HeaderComponent, OnboardingComponent, LandingComponent],
   template: `
-    <a class="skip-to-content" href="#main-content">Skip to content</a>
-    <app-header />
-    <main id="main-content" class="main-content">
-      <router-outlet />
-    </main>
-    @if (profileService.isNewUser()) {
-      <app-onboarding-dialog (dismissed)="profileService.isNewUser.set(false)" />
+    @if (!profileService.isLanded()) {
+      <app-landing />
+    } @else if (profileService.isNewUser()) {
+      <app-onboarding />
+    } @else {
+      <a class="skip-to-content" href="#main-content">Skip to content</a>
+      <app-header />
+      <main id="main-content" class="main-content">
+        <router-outlet />
+      </main>
     }
   `,
   styles: `

@@ -30,4 +30,8 @@ export class QuizService {
     if (!topic) return [];
     return [...topic.questions].sort(() => Math.random() - 0.5);
   }
+
+  readonly allQuestionsForCurrentAge = computed<QuizQuestion[]>(() =>
+    this.topics().flatMap((t) => t.questions)
+  );
 }

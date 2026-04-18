@@ -1,110 +1,207 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { ReadingAgeSelectorComponent } from '../reading-age-selector/reading-age-selector.component';
-import { SkillLevelSelectorComponent } from '../skill-level-selector/skill-level-selector.component';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+import { UserProfileService } from '../../../services/user-profile.service';
+import { IconComponent, IconName } from '../icon/icon.component';
+import { LogoMarkComponent } from '../logo-mark/logo-mark.component';
+import { JuniorSwitcherComponent } from '../junior-switcher/junior-switcher.component';
 
 interface NavItem {
   path: string;
   label: string;
-  icon: string;
+  icon: IconName;
 }
 
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, ReadingAgeSelectorComponent, SkillLevelSelectorComponent],
+  imports: [RouterLink, RouterLinkActive, IconComponent, LogoMarkComponent, JuniorSwitcherComponent],
   template: `
+    @if (showParentBanner()) {
+      <div class="parent-banner" role="status">
+        <span class="banner-left">
+          <app-icon name="user" [size]="14" [strokeWidth]="2.2" />
+          <span>Parent mode &middot; viewing {{ activeSkateName() }}</span>
+        </span>
+        <button type="button" class="banner-link" (click)="goToCustodian()">
+          Back to parent dashboard
+        </button>
+      </div>
+    }
+
     <header class="header">
       <div class="header-inner">
-        <a routerLink="/" class="logo" aria-label="JRDA Rules Home">
-          <span class="logo-icon" aria-hidden="true">&#9733;</span>
-          <span class="logo-text">JRDA Rules</span>
+        <a [routerLink]="homeRoute()" class="logo" aria-label="Derby Rules home">
+          <app-logo-mark [size]="38" primary="var(--color-text)" accent="var(--color-primary)" />
+          <span class="logo-text">
+            <span class="wordmark">DERBY RULES</span>
+            <span class="tagline">WFTDA &middot; JRDA &middot; for every skater</span>
+          </span>
         </a>
+
         <nav class="desktop-nav" aria-label="Main navigation">
-          @for (item of navItems; track item.path) {
+          @for (item of navItems(); track item.path) {
             <a
               [routerLink]="item.path"
               routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+              [routerLinkActiveOptions]="{ exact: item.path === '/' || item.path === '/custodian' }"
               class="nav-link"
             >
-              <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+              <app-icon [name]="item.icon" [size]="16" [strokeWidth]="2.2" />
               {{ item.label }}
             </a>
           }
         </nav>
-        <div class="selectors">
-          <app-reading-age-selector />
-          <div class="selector-divider" aria-hidden="true"></div>
-          <app-skill-level-selector />
-        </div>
+
+        @if (isParent()) {
+          <button
+            type="button"
+            class="profile-btn"
+            (click)="openSwitcher()"
+            [class.active]="switcherOpen()"
+          >
+            <app-icon name="users" [size]="18" [strokeWidth]="2.2" />
+            <span class="profile-text">
+              <span class="profile-name parent-name">{{ parentLabel() }}</span>
+              <span class="profile-role">
+                {{ parentSubLabel() }}
+                <app-icon name="chev-down" [size]="10" [strokeWidth]="2.4" />
+              </span>
+            </span>
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="profile-btn"
+            (click)="goToProfile()"
+            [class.active]="isOnProfile()"
+          >
+            <app-icon name="user" [size]="18" [strokeWidth]="2.2" />
+            <span class="profile-text">
+              <span class="profile-name">{{ skateName() }}</span>
+              <span class="profile-role">{{ roleLabel() }}</span>
+            </span>
+          </button>
+        }
       </div>
     </header>
+
     <nav class="mobile-nav" aria-label="Main navigation">
-      @for (item of navItems; track item.path) {
+      @for (item of navItems(); track item.path) {
         <a
           [routerLink]="item.path"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+          [routerLinkActiveOptions]="{ exact: item.path === '/' || item.path === '/custodian' }"
           class="mobile-nav-link"
         >
-          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+          <app-icon [name]="item.icon" [size]="22" [strokeWidth]="2.2" />
           <span class="nav-label">{{ item.label }}</span>
         </a>
       }
     </nav>
+
+    @if (switcherOpen()) {
+      <app-junior-switcher (closed)="switcherOpen.set(false)" />
+    }
   `,
   styles: `
+    /* Parent banner */
+    .parent-banner {
+      position: sticky;
+      top: 0;
+      z-index: 101;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-md);
+      padding: 6px 20px;
+      background: var(--color-primary);
+      color: #fff;
+    }
+
+    .banner-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .banner-link {
+      background: transparent;
+      border: none;
+      color: #fff;
+      text-decoration: underline;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
     .header {
       position: sticky;
       top: 0;
       z-index: 100;
       background: var(--color-surface);
-      border-bottom: 1px solid var(--color-border-light);
-      box-shadow: var(--shadow-sm);
+      border-bottom: var(--stroke) solid var(--color-border-strong);
+      box-shadow: var(--shadow-md);
     }
 
     .header-inner {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
       align-items: center;
-      gap: var(--space-sm) var(--space-lg);
+      gap: var(--space-lg);
       max-width: var(--max-width);
       margin: 0 auto;
       padding: var(--space-sm) var(--space-md);
       min-height: var(--header-height);
-
-      @media (min-width: 768px) {
-        flex-wrap: nowrap;
-        padding: 0 var(--space-md);
-      }
     }
 
     .logo {
       display: flex;
       align-items: center;
       gap: var(--space-sm);
-      font-family: var(--font-heading);
-      font-weight: 800;
-      font-size: var(--font-size-xl);
-      color: var(--color-primary);
+      color: var(--color-text);
       text-decoration: none;
-      flex-shrink: 0;
 
       &:hover {
         text-decoration: none;
       }
     }
 
-    .logo-icon {
-      font-size: var(--font-size-2xl);
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .wordmark {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+    }
+
+    .tagline {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-top: 4px;
     }
 
     .desktop-nav {
       display: none;
       align-items: center;
       gap: var(--space-xs);
-      flex: 1;
+      justify-self: center;
 
       @media (min-width: 768px) {
         display: flex;
@@ -117,22 +214,99 @@ interface NavItem {
       gap: var(--space-xs);
       padding: var(--space-sm) var(--space-md);
       border-radius: var(--radius-sm);
+      font-family: var(--font-display);
       font-weight: 600;
-      font-size: var(--font-size-sm);
+      font-size: 0.8125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
       color: var(--color-text-secondary);
       text-decoration: none;
       transition: background-color 0.15s, color 0.15s;
 
       &:hover {
-        background: var(--color-border-light);
+        background: var(--color-surface-alt);
         color: var(--color-text);
         text-decoration: none;
       }
 
       &.active {
-        background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-        color: var(--color-primary);
+        background: var(--color-text);
+        color: var(--color-surface);
       }
+    }
+
+    .profile-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: 6px 14px;
+      min-height: 44px;
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-hard);
+      font-family: var(--font-display);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      transition: transform 0.08s, box-shadow 0.08s;
+      cursor: pointer;
+
+      &:hover {
+        transform: translate(1px, 1px);
+        box-shadow: 0 1px 0 rgba(11, 16, 38, 0.9);
+      }
+
+      &.active {
+        background: var(--color-text);
+        color: var(--color-surface);
+        box-shadow: none;
+      }
+
+      &.active app-icon {
+        color: var(--color-accent);
+      }
+    }
+
+    .profile-text {
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1;
+
+      @media (min-width: 480px) {
+        display: flex;
+      }
+    }
+
+    .profile-name {
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
+    }
+
+    .parent-name {
+      max-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .profile-role {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 0.5625rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    .profile-btn.active .profile-role {
+      color: var(--color-accent);
     }
 
     .mobile-nav {
@@ -143,8 +317,8 @@ interface NavItem {
       right: 0;
       z-index: 100;
       background: var(--color-surface);
-      border-top: 1px solid var(--color-border-light);
-      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+      border-top: var(--stroke) solid var(--color-border-strong);
+      box-shadow: 0 -4px 18px rgba(11, 16, 38, 0.08);
 
       @media (min-width: 768px) {
         display: none;
@@ -159,8 +333,12 @@ interface NavItem {
       flex: 1;
       min-height: var(--nav-height-mobile);
       padding: var(--space-xs);
-      font-size: var(--font-size-xs);
-      font-weight: 600;
+      gap: 2px;
+      font-family: var(--font-display);
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
       color: var(--color-text-muted);
       text-decoration: none;
       transition: color 0.15s;
@@ -173,45 +351,87 @@ interface NavItem {
         color: var(--color-primary);
       }
     }
-
-    .nav-icon {
-      font-size: 1.25rem;
-    }
-
-    .selectors {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-xs);
-      width: 100%;
-
-      @media (min-width: 768px) {
-        flex-direction: row;
-        width: auto;
-        gap: var(--space-md);
-        justify-content: flex-end;
-      }
-    }
-
-    .selector-divider {
-      display: none;
-
-      @media (min-width: 768px) {
-        display: block;
-        width: 1px;
-        height: 24px;
-        background: var(--color-border-light);
-      }
-    }
   `,
 })
 export class HeaderComponent {
-  protected readonly navItems: NavItem[] = [
-    { path: '/', label: 'Home', icon: '\u{1F3E0}' },
-    { path: '/rules', label: 'Rules', icon: '\u{1F4D6}' },
-    { path: '/glossary', label: 'Glossary', icon: '\u{1F50D}' },
-    { path: '/quizzes', label: 'Quizzes', icon: '\u{2753}' },
-    { path: '/casebook', label: 'Casebook', icon: '\u{1F4CB}' },
-    { path: '/support', label: 'Support', icon: '\u2615' },
-  ];
+  private readonly profileService = inject(UserProfileService);
+  private readonly router = inject(Router);
+
+  protected readonly switcherOpen = signal(false);
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      map((e) => (e as NavigationEnd).urlAfterRedirects.split('?')[0].split('#')[0]),
+    ),
+    { initialValue: this.router.url.split('?')[0].split('#')[0] },
+  );
+
+  protected readonly isParent = computed(
+    () => this.profileService.profile()?.accountType === 'parent',
+  );
+
+  protected readonly homeRoute = computed(() => (this.isParent() ? '/custodian' : '/'));
+
+  protected readonly isOnDashboard = computed(() => {
+    const u = this.currentUrl();
+    return u === '/' || u === '/custodian';
+  });
+
+  protected readonly showParentBanner = computed(
+    () => this.isParent() && !this.isOnDashboard(),
+  );
+
+  protected readonly navItems = computed<NavItem[]>(() => {
+    const base: NavItem[] = [
+      { path: this.homeRoute(), label: 'Home', icon: 'home' },
+      { path: '/rules', label: 'Rules', icon: 'book' },
+      { path: '/glossary', label: 'Glossary', icon: 'search' },
+      { path: '/quizzes', label: 'Quizzes', icon: 'question' },
+      { path: '/casebook', label: 'Casebook', icon: 'clipboard' },
+      { path: '/support', label: 'Support', icon: 'support' },
+    ];
+    return base;
+  });
+
+  protected readonly skateName = computed(
+    () => this.profileService.profile()?.skateName ?? 'Profile',
+  );
+
+  protected readonly roleLabel = computed(() => {
+    const p = this.profileService.profile();
+    if (this.profileService.derivedRole() === 'adult') return 'Adult';
+    return p?.level ? `Junior · ${p.level}` : 'Junior';
+  });
+
+  protected readonly isOnProfile = computed(() => this.currentUrl().startsWith('/profile'));
+
+  protected readonly activeSkateName = computed(
+    () => this.profileService.profile()?.skateName ?? 'skater',
+  );
+
+  protected readonly parentLabel = computed(() => {
+    if (this.isOnDashboard()) return 'Parent';
+    return this.profileService.profile()?.skateName ?? 'Parent';
+  });
+
+  protected readonly parentSubLabel = computed(() => {
+    if (this.isOnDashboard()) {
+      const n = this.profileService.juniors().length;
+      return `${n} skater${n === 1 ? '' : 's'}`;
+    }
+    return 'Switch';
+  });
+
+  protected goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  protected goToCustodian(): void {
+    this.router.navigate(['/custodian']);
+  }
+
+  protected openSwitcher(): void {
+    this.switcherOpen.set(true);
+  }
 }

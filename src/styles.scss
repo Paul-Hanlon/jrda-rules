@@ -1,40 +1,48 @@
-// Design Tokens
+// Design Tokens — TRACK direction (from Derby Rules prototype)
 :root {
-  // Colors - roller derby inspired, WCAG AA compliant
-  --color-primary: #0d7377;
-  --color-primary-light: #14a3a8;
-  --color-primary-dark: #095456;
-  --color-accent: #d6336c;
-  --color-accent-light: #e8668a;
-  --color-secondary: #6741d9;
-  --color-secondary-light: #845ef7;
+  // TRACK palette — orange · lime · navy · cream
+  --color-primary: #ff5a1f;
+  --color-primary-soft: #ffe1d2;
+  --color-accent: #c7ff3f;
+  --color-accent-ink: #0b1026;
 
-  // Skill level colors
-  --color-level-1: #2b8a3e;
-  --color-level-2: #e67700;
-  --color-level-3: #c92a2a;
+  // Legacy aliases (existing components still reference these)
+  --color-primary-light: #ff7a47;
+  --color-primary-dark: #d9430f;
+  --color-accent-light: #d4ff6a;
+  --color-secondary: #0b1026;
+  --color-secondary-light: #1c2450;
 
-  // JRDA addendum
-  --color-jrda: #f59f00;
-  --color-jrda-bg: #fff9db;
-  --color-jrda-border: #fcc419;
+  // Skill level chips
+  --color-level-1: #2ba463;
+  --color-level-2: #ffb703;
+  --color-level-3: #e43a3a;
 
-  // Neutrals
-  --color-bg: #f8f9fa;
+  // JRDA addendum callout
+  --color-jrda: #ffb703;
+  --color-jrda-bg: #ffefb8;
+  --color-jrda-border: #ffb703;
+
+  // Surfaces / ink
+  --color-bg: #f4f1e9;
   --color-surface: #ffffff;
-  --color-text: #212529;
-  --color-text-secondary: #495057;
-  --color-text-muted: #868e96;
-  --color-border: #dee2e6;
-  --color-border-light: #e9ecef;
+  --color-surface-alt: #ede9de;
+  --color-text: #0b1026;
+  --color-text-secondary: #2a3050;
+  --color-text-muted: #6a6f85;
+  --color-border: #d9d4c4;
+  --color-border-strong: #0b1026;
+  --color-border-light: #e4dfd0;
 
   // Feedback
-  --color-success: #2b8a3e;
-  --color-error: #c92a2a;
+  --color-success: #2ba463;
+  --color-error: #e43a3a;
 
-  // Typography
-  --font-heading: 'Nunito', sans-serif;
-  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  // Typography — TRACK uses Space Grotesk for display, Inter for body
+  --font-heading: 'Space Grotesk', 'Archivo', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Archivo Black', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -51,19 +59,23 @@
   --space-xl: 2rem;
   --space-2xl: 3rem;
 
-  // Borders
+  // Borders — TRACK is chunky, 2px strokes, hard drop shadows
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
-  --radius-lg: 1rem;
+  --radius-lg: 1.125rem;
+  --radius-card: 1.125rem;
+  --radius-chip: 999px;
   --radius-full: 9999px;
+  --stroke: 2px;
 
-  // Shadows
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  // Shadows — hard-edged "arcade" drop shadow plus a softer ambient one
+  --shadow-hard: 0 2px 0 rgba(11, 16, 38, 0.9);
+  --shadow-sm: 0 2px 0 rgba(11, 16, 38, 0.9);
+  --shadow-md: 0 4px 18px rgba(11, 16, 38, 0.08);
+  --shadow-lg: 0 12px 30px rgba(11, 16, 38, 0.14);
 
   // Layout
-  --header-height: 64px;
+  --header-height: 72px;
   --nav-height-mobile: 64px;
   --max-width: 1200px;
   --touch-target: 48px;
@@ -96,7 +108,8 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 a {
@@ -108,7 +121,7 @@ a {
   }
 
   &:focus-visible {
-    outline: 3px solid var(--color-primary-light);
+    outline: 3px solid var(--color-accent);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -122,7 +135,7 @@ button {
   background: none;
 
   &:focus-visible {
-    outline: 3px solid var(--color-primary-light);
+    outline: 3px solid var(--color-accent);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -144,10 +157,10 @@ img {
   left: var(--space-md);
   z-index: 1000;
   padding: var(--space-sm) var(--space-md);
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--color-text);
+  color: var(--color-accent);
   border-radius: var(--radius-sm);
-  font-weight: 600;
+  font-weight: 700;
 
   &:focus {
     top: var(--space-md);

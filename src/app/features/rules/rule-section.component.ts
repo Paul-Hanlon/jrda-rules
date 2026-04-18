@@ -1,85 +1,122 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RulesService } from '../../services/rules.service';
 import { ProgressService } from '../../services/progress.service';
 import { JrdaBadgeComponent } from '../../shared/components/jrda-badge/jrda-badge.component';
-import { Rule } from '../../models/rule';
+import { IconComponent } from '../../shared/components/icon/icon.component';
+import { Rule, RuleSection } from '../../models/rule';
 
 @Component({
   selector: 'app-rule-section',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, JrdaBadgeComponent],
+  imports: [RouterLink, JrdaBadgeComponent, IconComponent],
   template: `
     <div class="rule-section">
       @if (section(); as s) {
-        <nav class="breadcrumb" aria-label="Breadcrumb">
+        <nav class="crumbs" aria-label="Breadcrumb">
           <a routerLink="/rules">Rules</a>
           <span aria-hidden="true">/</span>
           <span aria-current="page">{{ s.number }}. {{ s.title }}</span>
         </nav>
 
-        <h1>
-          <span class="section-icon" aria-hidden="true">{{ s.icon }}</span>
-          {{ s.number }}. {{ s.title }}
-        </h1>
-        <p class="description">{{ s.description }}</p>
+        <header class="page-head">
+          <div class="kicker">Section {{ s.number }}</div>
+          <h1>{{ s.title }}</h1>
+          <p class="description">{{ s.description }}</p>
+        </header>
 
         <div class="rules-list">
           @for (rule of s.rules; track rule.id) {
-            <div class="rule-item" [class.read]="isRead(rule.id)">
+            @let open = isExpanded(rule.id);
+            @let read = isRead(rule.id);
+            <article
+              [id]="'rule-' + rule.id"
+              class="rule-item"
+              [class.read]="read"
+              [class.open]="open"
+            >
               <button
+                type="button"
                 class="rule-header"
                 (click)="toggleExpanded(rule.id)"
-                [attr.aria-expanded]="isExpanded(rule.id)"
-                [attr.aria-controls]="'rule-' + rule.id"
+                [attr.aria-expanded]="open"
+                [attr.aria-controls]="'rule-body-' + rule.id"
               >
-                <span class="rule-number">{{ rule.number }}</span>
+                <span class="rule-num">{{ rule.number }}</span>
                 <span class="rule-title">{{ rule.title }}</span>
                 @if (rule.jrdaAddendum) {
-                  <app-jrda-badge />
+                  <span class="chip chip-gold">JRDA</span>
                 }
-                <span class="expand-icon" aria-hidden="true">
-                  {{ isExpanded(rule.id) ? '\u25B2' : '\u25BC' }}
-                </span>
+                <app-icon
+                  [name]="open ? 'chev-up' : 'chev-down'"
+                  [size]="18"
+                  [strokeWidth]="2.2"
+                />
               </button>
 
-              @if (isExpanded(rule.id)) {
-                <div [id]="'rule-' + rule.id" class="rule-content">
-                  <p>{{ rule.content }}</p>
+              @if (open) {
+                <div [id]="'rule-body-' + rule.id" class="rule-body">
+                  <p class="rule-content">{{ rule.content }}</p>
 
                   @if (rule.jrdaAddendum) {
-                    <div class="jrda-addendum">
+                    <aside class="jrda-callout">
                       <app-jrda-badge />
                       <p>{{ rule.jrdaAddendum }}</p>
-                    </div>
+                    </aside>
                   }
 
                   @if (rule.subrules?.length) {
                     <div class="subrules">
                       @for (sub of rule.subrules; track sub.id) {
-                        <div class="subrule">
-                          <strong>{{ sub.number }}</strong> {{ sub.content }}
+                        <div [id]="'rule-' + sub.id" class="subrule">
+                          <div class="subrule-head">
+                            <span class="subrule-num">{{ sub.number }}</span>
+                            @if (sub.title) {
+                              <span class="subrule-title">{{ sub.title }}</span>
+                            }
+                          </div>
+                          <p class="subrule-content">{{ sub.content }}</p>
                           @if (sub.jrdaAddendum) {
-                            <div class="jrda-addendum">
+                            <aside class="jrda-callout">
                               <app-jrda-badge />
                               <p>{{ sub.jrdaAddendum }}</p>
-                            </div>
+                            </aside>
                           }
                         </div>
                       }
                     </div>
                   }
 
-                  @if (!isRead(rule.id)) {
-                    <button class="mark-read-btn" (click)="markRead(rule.id)">
-                      Mark as read
-                    </button>
-                  } @else {
-                    <span class="read-badge">Read</span>
-                  }
+                  <div class="rule-actions">
+                    @if (read) {
+                      <span class="pill pill-success">
+                        <app-icon name="check" [size]="14" [strokeWidth]="2.5" />
+                        Read
+                      </span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="pill pill-accent"
+                        (click)="markRead(rule.id)"
+                      >
+                        <app-icon name="check" [size]="14" [strokeWidth]="2.5" />
+                        Mark as read
+                      </button>
+                    }
+                  </div>
                 </div>
               }
-            </div>
+            </article>
           }
         </div>
       } @else {
@@ -95,34 +132,53 @@ import { Rule } from '../../models/rule';
       gap: var(--space-lg);
     }
 
-    .breadcrumb {
+    /* Crumbs */
+    .crumbs {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
-      font-size: var(--font-size-sm);
+      gap: var(--space-xs);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
       color: var(--color-text-muted);
 
       a {
         color: var(--color-primary);
+        text-decoration: none;
+
+        &:hover { text-decoration: underline; }
       }
     }
 
-    h1 {
+    /* Page head */
+    .page-head {
       display: flex;
-      align-items: center;
-      gap: var(--space-sm);
-      font-size: var(--font-size-2xl);
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
       color: var(--color-primary);
     }
 
-    .section-icon {
-      font-size: var(--font-size-3xl);
+    .page-head h1 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      margin: 0;
     }
 
     .description {
       color: var(--color-text-secondary);
+      margin: 0;
     }
 
+    /* Rule list */
     .rules-list {
       display: flex;
       flex-direction: column;
@@ -131,118 +187,244 @@ import { Rule } from '../../models/rule';
 
     .rule-item {
       background: var(--color-surface);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-hard);
       overflow: hidden;
+      transition: box-shadow 0.08s;
 
       &.read {
-        border-left: 3px solid var(--color-success);
+        box-shadow: none;
+        border-left-width: 6px;
+        border-left-color: var(--color-success);
       }
     }
 
     .rule-header {
+      width: 100%;
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
-      width: 100%;
-      padding: var(--space-md) var(--space-lg);
+      gap: 12px;
+      padding: 14px 18px;
+      min-height: 52px;
+      background: transparent;
+      border: none;
       text-align: left;
-      min-height: var(--touch-target);
+      cursor: pointer;
 
-      &:hover {
-        background: var(--color-border-light);
-      }
+      &:hover { background: var(--color-surface-alt); }
     }
 
-    .rule-number {
-      font-family: var(--font-heading);
-      font-weight: 700;
-      color: var(--color-primary);
+    .rule-num {
       flex-shrink: 0;
+      padding: 4px 8px;
+      background: var(--color-text);
+      color: var(--color-surface);
+      border-radius: 4px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.8125rem;
+      letter-spacing: 0.03em;
     }
 
     .rule-title {
       flex: 1;
-      font-weight: 600;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--color-text);
     }
 
-    .expand-icon {
-      font-size: var(--font-size-xs);
-      color: var(--color-text-muted);
+    .rule-body {
+      padding: 0 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .rule-content {
-      padding: 0 var(--space-lg) var(--space-lg);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-md);
-      line-height: 1.7;
+      margin: 0;
+      font-size: 0.9375rem;
+      line-height: 1.65;
+      color: var(--color-text-secondary);
     }
 
-    .jrda-addendum {
+    /* JRDA addendum callout */
+    .jrda-callout {
       display: flex;
       flex-direction: column;
       gap: var(--space-sm);
       padding: var(--space-md);
       background: var(--color-jrda-bg);
-      border-left: 3px solid var(--color-jrda-border);
+      border-left: 4px solid var(--color-jrda-border);
       border-radius: var(--radius-sm);
+
+      p {
+        margin: 0;
+        line-height: 1.6;
+        color: var(--color-text);
+      }
     }
 
+    /* Subrules */
     .subrules {
       display: flex;
       flex-direction: column;
-      gap: var(--space-sm);
-      padding-left: var(--space-lg);
+      gap: 10px;
+      padding-left: 16px;
+      border-left: 2px dashed var(--color-border);
     }
 
     .subrule {
-      padding: var(--space-sm) 0;
-      border-bottom: 1px solid var(--color-border-light);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
-      &:last-child {
-        border-bottom: none;
+    .subrule-head {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .subrule-num {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      letter-spacing: 0.02em;
+    }
+
+    .subrule-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: var(--color-text);
+    }
+
+    .subrule-content {
+      margin: 0;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+    }
+
+    /* Chips + pills */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: var(--radius-chip);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: var(--stroke) solid var(--color-border-strong);
+      white-space: nowrap;
+    }
+
+    .chip-gold {
+      background: var(--color-jrda-bg);
+      color: var(--color-text);
+    }
+
+    .rule-actions {
+      display: flex;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: var(--stroke) solid var(--color-border-strong);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      box-shadow: var(--shadow-hard);
+      cursor: pointer;
+
+      &:hover:not([disabled]) {
+        transform: translate(1px, 1px);
+        box-shadow: 0 1px 0 rgba(11, 16, 38, 0.9);
       }
     }
 
-    .mark-read-btn {
-      align-self: flex-start;
-      padding: var(--space-sm) var(--space-md);
-      background: var(--color-primary);
+    .pill-accent {
+      background: var(--color-accent);
+      color: var(--color-accent-ink);
+    }
+
+    .pill-success {
+      background: var(--color-success);
       color: #fff;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      font-size: var(--font-size-sm);
-      min-height: var(--touch-target);
+      cursor: default;
+      box-shadow: none;
 
       &:hover {
-        background: var(--color-primary-dark);
+        transform: none;
+        box-shadow: none;
       }
-    }
-
-    .read-badge {
-      display: inline-block;
-      padding: var(--space-xs) var(--space-sm);
-      background: color-mix(in srgb, var(--color-success) 15%, transparent);
-      color: var(--color-success);
-      border-radius: var(--radius-sm);
-      font-size: var(--font-size-sm);
-      font-weight: 600;
-      align-self: flex-start;
     }
   `,
 })
-export class RuleSectionComponent {
+export class RuleSectionComponent implements OnInit {
   readonly sectionId = input.required<string>();
 
   private readonly rulesService = inject(RulesService);
   private readonly progressService = inject(ProgressService);
-  private readonly expandedRules = signal<Set<string>>(new Set());
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly section = computed(() => {
-    const id = this.sectionId();
-    return this.rulesService.sections().find((s) => s.id === id);
-  });
+  private readonly expandedRules = signal<Set<string>>(new Set());
+  private didSeed = false;
+
+  protected readonly section = computed<RuleSection | undefined>(() =>
+    this.rulesService.sections().find((s) => s.id === this.sectionId())
+  );
+
+  ngOnInit(): void {
+    this.seedOnce();
+    this.route.fragment
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((fragment) => this.applyFragment(fragment));
+  }
+
+  private seedOnce(): void {
+    if (this.didSeed) return;
+    const s = this.section();
+    if (!s?.rules.length) return;
+
+    const fragment = this.route.snapshot.fragment;
+    const target = fragment ? this.findByNumber(s, fragment) : null;
+    const seedId = target?.id ?? s.rules[0].id;
+    this.expandedRules.set(new Set([seedId]));
+    this.didSeed = true;
+
+    if (target) {
+      queueMicrotask(() => this.scrollToRule(target.id));
+    }
+  }
+
+  private applyFragment(fragment: string | null): void {
+    const s = this.section();
+    if (!s || !fragment) return;
+    const target = this.findByNumber(s, fragment);
+    if (!target) return;
+    this.expandedRules.update((set) => {
+      if (set.has(target.id)) return set;
+      const next = new Set(set);
+      next.add(target.id);
+      return next;
+    });
+    queueMicrotask(() => this.scrollToRule(target.id));
+  }
 
   protected isExpanded(ruleId: string): boolean {
     return this.expandedRules().has(ruleId);
@@ -251,11 +433,8 @@ export class RuleSectionComponent {
   protected toggleExpanded(ruleId: string): void {
     this.expandedRules.update((set) => {
       const next = new Set(set);
-      if (next.has(ruleId)) {
-        next.delete(ruleId);
-      } else {
-        next.add(ruleId);
-      }
+      if (next.has(ruleId)) next.delete(ruleId);
+      else next.add(ruleId);
       return next;
     });
   }
@@ -266,5 +445,22 @@ export class RuleSectionComponent {
 
   protected markRead(ruleId: string): void {
     this.progressService.markRuleRead(ruleId);
+  }
+
+  private findByNumber(section: RuleSection, number: string): Rule | null {
+    for (const rule of section.rules) {
+      if (rule.number === number) return rule;
+      for (const sub of rule.subrules ?? []) {
+        if (sub.number === number) return sub;
+      }
+    }
+    return null;
+  }
+
+  private scrollToRule(id: string): void {
+    const el = document.getElementById('rule-' + id);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    window.scrollTo({ top: window.scrollY + rect.top - 80, behavior: 'smooth' });
   }
 }

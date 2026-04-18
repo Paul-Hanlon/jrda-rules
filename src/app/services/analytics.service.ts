@@ -2,14 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { filter } from 'rxjs';
-import { initializeApp } from 'firebase/app';
 import {
   getAnalytics,
   logEvent,
   setAnalyticsCollectionEnabled,
   Analytics,
 } from 'firebase/analytics';
-import { environment } from '../../environments/environment';
+import { getFirebaseApp } from './firebase-app';
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
@@ -18,8 +17,7 @@ export class AnalyticsService {
   private titleService = inject(Title);
 
   constructor() {
-    const app = initializeApp(environment.firebase);
-    this.analytics = getAnalytics(app);
+    this.analytics = getAnalytics(getFirebaseApp());
     setAnalyticsCollectionEnabled(this.analytics, true);
     this.trackPageViews();
   }

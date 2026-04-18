@@ -47,6 +47,14 @@ jrda-rules-docs/node_modules
 jrda-rules-docs/build
 jrda-rules-docs/.docusaurus
 
+# Playwright
+/test-results
+/playwright-report
+/blob-report
+
+# Claude Code
+.claude/scheduled_tasks.lock
+
 # System files
 .DS_Store
 Thumbs.db

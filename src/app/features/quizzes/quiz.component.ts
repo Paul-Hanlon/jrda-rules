@@ -1,121 +1,200 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
   inject,
   input,
-  OnInit,
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { QuizService } from '../../services/quiz.service';
 import { ProgressService } from '../../services/progress.service';
+import { DailyJamService } from '../../services/daily-jam.service';
 import { QuizQuestion } from '../../models/quiz';
-import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
+import { IconComponent } from '../../shared/components/icon/icon.component';
+import { JerseyNumberComponent } from '../../shared/components/jersey-number/jersey-number.component';
 import { FlagQuestionDialogComponent } from '../../shared/components/flag-question-dialog/flag-question-dialog.component';
 
 @Component({
   selector: 'app-quiz',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ProgressBarComponent, FlagQuestionDialogComponent],
+  imports: [RouterLink, IconComponent, JerseyNumberComponent, FlagQuestionDialogComponent],
   template: `
     <div class="quiz">
-      <nav class="breadcrumb" aria-label="Breadcrumb">
+      <nav class="crumbs" aria-label="Breadcrumb">
         <a routerLink="/quizzes">Quizzes</a>
         <span aria-hidden="true">/</span>
-        <span aria-current="page">{{ topic()?.title ?? 'Quiz' }}</span>
+        <span aria-current="page">{{ isDailyMode() ? 'Daily Jam' : (topic()?.title ?? 'Quiz') }}</span>
       </nav>
 
       @if (showResults()) {
-        <div class="results">
-          <h1>Quiz Complete!</h1>
-          <div class="score-circle" [attr.data-grade]="grade()">
-            <span class="score-value">{{ score() }}/{{ questions().length }}</span>
-            <span class="score-label">{{ percentage() }}%</span>
-          </div>
-          <p class="grade-text">{{ gradeText() }}</p>
+        <!-- ─────────── Results view ─────────── -->
+        <section class="results" aria-label="Quiz results">
+          <div class="kicker">Quiz complete</div>
+          <h1>Final Score</h1>
 
-          <div class="results-review">
-            <h2>Review Your Answers</h2>
-            @for (q of questions(); track q.id; let i = $index) {
-              <div class="review-item" [class.correct]="answers()[i] === q.correctIndex" [class.wrong]="answers()[i] !== q.correctIndex">
-                <p class="review-question"><strong>{{ i + 1 }}.</strong> {{ q.question }}</p>
-                <p class="review-answer">
-                  Your answer: {{ q.options[answers()[i]] }}
-                  @if (answers()[i] !== q.correctIndex) {
-                    <br />Correct: {{ q.options[q.correctIndex] }}
-                  }
-                </p>
-                <p class="review-explanation">{{ q.explanation }}</p>
-              </div>
-            }
+          <div
+            class="ring"
+            role="img"
+            [attr.aria-label]="'Score: ' + percentage() + ' percent'"
+          >
+            <svg viewBox="0 0 200 200" width="200" height="200">
+              <g transform="rotate(-90 100 100)">
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="86"
+                  fill="none"
+                  stroke="var(--color-surface-alt)"
+                  stroke-width="14"
+                />
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="86"
+                  fill="none"
+                  [attr.stroke]="gradeStroke()"
+                  stroke-width="14"
+                  stroke-linecap="round"
+                  [attr.stroke-dasharray]="ringDash()"
+                />
+              </g>
+            </svg>
+            <div class="ring-label">
+              <span class="ring-pct">{{ percentage() }}%</span>
+              <span class="ring-fraction">{{ score() }}/{{ questions().length }}</span>
+            </div>
           </div>
+
+          <p class="grade-blurb">{{ gradeText() }}</p>
 
           <div class="results-actions">
-            <button class="btn primary" (click)="retake()">Retake Quiz</button>
-            <a routerLink="/quizzes" class="btn secondary">All Quizzes</a>
+            <button type="button" class="pill pill-primary" (click)="retake()">
+              <app-icon name="sparkle" [size]="16" [strokeWidth]="2.4" />
+              Retake
+            </button>
+            <a routerLink="/quizzes" class="pill pill-ghost">
+              <app-icon name="chev-left" [size]="16" [strokeWidth]="2.4" />
+              All quizzes
+            </a>
           </div>
-        </div>
-      } @else if (currentQuestion(); as q) {
-        <div class="question-container">
-          <app-progress-bar
-            [value]="currentIndex()"
-            [max]="questions().length"
-            [label]="'Question ' + (currentIndex() + 1) + ' of ' + questions().length"
-          />
 
-          <div class="question-card">
-            <div class="question-header">
-              <span class="question-number">Question {{ currentIndex() + 1 }} of {{ questions().length }}</span>
-              <button
-                type="button"
-                class="flag-btn"
-                aria-label="Flag this question"
-                (click)="showFlagDialog.set(true)"
-              >
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-                  <line x1="4" y1="22" x2="4" y2="15"/>
-                </svg>
-              </button>
+          <section class="review" aria-label="Review your answers">
+            <div class="section-head">
+              <div class="kicker kicker-muted">Review</div>
+              <h2>Your answers</h2>
             </div>
-            <h2>{{ q.question }}</h2>
-
-            <div class="options" role="radiogroup" aria-label="Answer options">
-              @for (option of q.options; track option; let i = $index) {
-                <button
-                  class="option-btn"
-                  [class.selected]="selectedOption() === i"
-                  [class.correct]="answered() && i === q.correctIndex"
-                  [class.wrong]="answered() && selectedOption() === i && i !== q.correctIndex"
-                  [disabled]="answered()"
-                  role="radio"
-                  [attr.aria-checked]="selectedOption() === i"
-                  (click)="selectOption(i)"
-                >
-                  <span class="option-letter">{{ optionLetters[i] }}</span>
-                  {{ option }}
-                </button>
+            <div class="review-list">
+              @for (q of questions(); track q.id; let i = $index) {
+                @let correct = answers()[i] === q.correctIndex;
+                <article class="review-row" [class.row-correct]="correct" [class.row-wrong]="!correct">
+                  <p class="review-q"><strong>{{ i + 1 }}.</strong> {{ q.question }}</p>
+                  <p class="review-a">
+                    Your answer: <strong>{{ q.options[answers()[i]] }}</strong>
+                    @if (!correct) {
+                      <br />Correct: <strong>{{ q.options[q.correctIndex] }}</strong>
+                    }
+                  </p>
+                  <p class="review-expl">{{ q.explanation }}</p>
+                </article>
               }
             </div>
+          </section>
+        </section>
+      } @else if (currentQuestion(); as q) {
+        <!-- ─────────── In-flight view ─────────── -->
 
-            @if (answered()) {
-              <div class="explanation" [class.correct]="selectedOption() === q.correctIndex">
-                <p>
-                  @if (selectedOption() === q.correctIndex) {
-                    <strong>Correct!</strong>
-                  } @else {
-                    <strong>Not quite.</strong>
-                  }
-                  {{ q.explanation }}
-                </p>
-                <span class="rule-ref">Rule {{ q.ruleReference }}</span>
+        <!-- Scoreboard strip -->
+        <div class="scoreboard">
+          <div class="score-head">
+            <div class="score-title">
+              <div class="kicker kicker-on-ink">Quiz</div>
+              <div class="score-topic">{{ isDailyMode() ? 'Daily Jam' : (topic()?.title ?? 'Quiz') }}</div>
+            </div>
+            <div class="score-progress">
+              <div class="score-numbers">
+                <span>Q{{ currentIndex() + 1 }}/{{ questions().length }}</span>
+                <span>{{ progressPct() }}%</span>
               </div>
-              <button class="btn primary next-btn" (click)="nextQuestion()">
-                {{ currentIndex() === questions().length - 1 ? 'See Results' : 'Next Question' }}
+              <div class="score-bar" aria-hidden="true">
+                <div class="score-fill" [style.width.%]="progressPct()"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question card -->
+        <div class="q-card">
+          <div class="q-head">
+            <div class="q-head-left">
+              <app-jersey-number
+                [n]="currentIndex() + 1"
+                [size]="44"
+                background="var(--color-primary)"
+                borderColor="var(--color-text)"
+              />
+              <span class="kicker kicker-muted">
+                Question {{ currentIndex() + 1 }} of {{ questions().length }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="flag-btn"
+              aria-label="Flag this question"
+              (click)="showFlagDialog.set(true)"
+            >
+              <app-icon name="flag" [size]="18" [strokeWidth]="2.2" />
+            </button>
+          </div>
+
+          <h2 class="q-stem">{{ q.question }}</h2>
+
+          <div class="options" role="radiogroup" aria-label="Answer options">
+            @for (option of q.options; track option; let i = $index) {
+              @let state = optionState(i, q);
+              <button
+                type="button"
+                role="radio"
+                class="option"
+                [class.option-selected]="state === 'selected'"
+                [class.option-correct]="state === 'correct'"
+                [class.option-wrong]="state === 'wrong'"
+                [disabled]="answered()"
+                [attr.aria-checked]="selectedOption() === i"
+                (click)="selectOption(i)"
+              >
+                <span class="letter">{{ optionLetters[i] }}</span>
+                <span class="option-text">{{ option }}</span>
+                @if (state === 'correct') {
+                  <app-icon name="check" [size]="20" [strokeWidth]="3" />
+                }
+                @if (state === 'wrong') {
+                  <app-icon name="close" [size]="20" [strokeWidth]="3" />
+                }
               </button>
             }
           </div>
+
+          @if (answered()) {
+            @let gotIt = selectedOption() === q.correctIndex;
+            <aside
+              class="feedback"
+              [class.feedback-correct]="gotIt"
+              [class.feedback-wrong]="!gotIt"
+              aria-live="polite"
+            >
+              <div class="feedback-head">{{ gotIt ? '✓ Correct!' : '✗ Not quite' }}</div>
+              <p class="feedback-body">{{ q.explanation }}</p>
+              <div class="feedback-rule">Rule {{ q.ruleReference }}</div>
+            </aside>
+            <div class="advance">
+              <button type="button" class="pill pill-primary" (click)="nextQuestion()">
+                {{ currentIndex() === questions().length - 1 ? 'See results' : 'Next question' }}
+                <app-icon name="arrow-right" [size]="16" [strokeWidth]="2.4" />
+              </button>
+            </div>
+          }
 
           @if (showFlagDialog()) {
             <app-flag-question-dialog
@@ -128,8 +207,13 @@ import { FlagQuestionDialogComponent } from '../../shared/components/flag-questi
           }
         </div>
       } @else {
-        <p>Quiz not found.</p>
-        <a routerLink="/quizzes">Back to Quizzes</a>
+        <div class="not-found">
+          <p>Quiz not found.</p>
+          <a routerLink="/quizzes" class="pill pill-ghost">
+            <app-icon name="chev-left" [size]="16" [strokeWidth]="2.4" />
+            All quizzes
+          </a>
+        </div>
       }
     </div>
   `,
@@ -137,105 +221,180 @@ import { FlagQuestionDialogComponent } from '../../shared/components/flag-questi
     .quiz {
       display: flex;
       flex-direction: column;
-      gap: var(--space-lg);
-      max-width: 700px;
+      gap: 18px;
+      max-width: 720px;
       margin: 0 auto;
       width: 100%;
     }
 
-    .breadcrumb {
+    .crumbs {
       display: flex;
       align-items: center;
-      gap: var(--space-sm);
-      font-size: var(--font-size-sm);
+      gap: var(--space-xs);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
       color: var(--color-text-muted);
 
-      a { color: var(--color-primary); }
-    }
-
-    .question-card {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-lg);
-      padding: var(--space-xl);
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-
-      h2 {
-        font-size: var(--font-size-xl);
-        line-height: 1.4;
+      a {
+        color: var(--color-primary);
+        text-decoration: none;
+        &:hover { text-decoration: underline; }
       }
     }
 
-    .question-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--color-primary);
     }
 
-    .question-number {
-      font-size: var(--font-size-sm);
+    .kicker-muted {
       color: var(--color-text-muted);
-      font-weight: 600;
+    }
+
+    .kicker-on-ink {
+      color: var(--color-surface);
+      opacity: 0.7;
+      font-size: 0.625rem;
+    }
+
+    /* ─── Scoreboard ─── */
+    .scoreboard {
+      background: var(--color-text);
+      color: var(--color-surface);
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+    }
+
+    .score-head {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .score-title {
+      flex: 0 0 auto;
+    }
+
+    .score-topic {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+      margin-top: 2px;
+    }
+
+    .score-progress {
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .score-numbers {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+    }
+
+    .score-bar {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .score-fill {
+      height: 100%;
+      background: var(--color-accent);
+      transition: width 0.3s ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .score-fill { transition: none; }
+    }
+
+    /* ─── Question card ─── */
+    .q-card {
+      background: var(--color-surface);
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-hard);
+      padding: 24px;
+    }
+
+    .q-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+
+    .q-head-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .flag-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: var(--space-xs);
-      border: none;
-      border-radius: var(--radius-sm);
+      width: 40px;
+      height: 40px;
       background: transparent;
+      border: none;
       color: var(--color-text-muted);
-      cursor: pointer;
-      transition: color 0.15s, background-color 0.15s;
-      min-width: var(--touch-target);
-      min-height: var(--touch-target);
+      border-radius: var(--radius-sm);
 
       &:hover {
+        background: var(--color-surface-alt);
         color: var(--color-error);
-        background: color-mix(in srgb, var(--color-error) 8%, transparent);
       }
     }
 
+    .q-stem {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.375rem;
+      line-height: 1.3;
+      margin: 8px 0 18px;
+      color: var(--color-text);
+    }
+
+    /* ─── Options ─── */
     .options {
       display: flex;
       flex-direction: column;
-      gap: var(--space-sm);
+      gap: 10px;
     }
 
-    .option-btn {
+    .option {
       display: flex;
       align-items: center;
-      gap: var(--space-md);
+      gap: 14px;
       width: 100%;
-      padding: var(--space-md) var(--space-lg);
+      padding: 14px 16px;
+      min-height: 56px;
       text-align: left;
-      border: 2px solid var(--color-border);
-      border-radius: var(--radius-md);
-      min-height: var(--touch-target);
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
 
       &:hover:not(:disabled) {
-        border-color: var(--color-primary);
-        background: color-mix(in srgb, var(--color-primary) 5%, transparent);
-      }
-
-      &.selected {
-        border-color: var(--color-primary);
-        background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-      }
-
-      &.correct {
-        border-color: var(--color-success);
-        background: color-mix(in srgb, var(--color-success) 10%, transparent);
-      }
-
-      &.wrong {
-        border-color: var(--color-error);
-        background: color-mix(in srgb, var(--color-error) 10%, transparent);
+        background: var(--color-surface-alt);
       }
 
       &:disabled {
@@ -243,140 +402,285 @@ import { FlagQuestionDialogComponent } from '../../shared/components/flag-questi
       }
     }
 
-    .option-letter {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-full);
-      background: var(--color-border-light);
-      font-family: var(--font-heading);
-      font-weight: 700;
-      font-size: var(--font-size-sm);
-      flex-shrink: 0;
+    @media (prefers-reduced-motion: reduce) {
+      .option { transition: none; }
     }
 
-    .explanation {
-      padding: var(--space-md);
-      border-radius: var(--radius-sm);
-      background: color-mix(in srgb, var(--color-error) 8%, transparent);
-      border-left: 3px solid var(--color-error);
-
-      &.correct {
-        background: color-mix(in srgb, var(--color-success) 8%, transparent);
-        border-left-color: var(--color-success);
-      }
-
-      .rule-ref {
-        display: inline-block;
-        margin-top: var(--space-sm);
-        font-size: var(--font-size-xs);
-        color: var(--color-text-muted);
-      }
-    }
-
-    .btn {
+    .letter {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: var(--space-sm) var(--space-xl);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--color-surface-alt);
+      border: var(--stroke) solid currentColor;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 0.875rem;
+    }
+
+    .option-text {
+      flex: 1;
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+    }
+
+    .option-selected {
+      background: var(--color-primary-soft);
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .option-correct {
+      background: var(--color-success);
+      color: #fff;
+      border-color: var(--color-text);
+      box-shadow: var(--shadow-md);
+    }
+
+    .option-correct .letter,
+    .option-wrong .letter {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: currentColor;
+      color: #fff;
+    }
+
+    .option-wrong {
+      background: var(--color-error);
+      color: #fff;
+      border-color: var(--color-text);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ─── Feedback ─── */
+    .feedback {
+      margin-top: 16px;
+      padding: 16px;
+      border: var(--stroke) solid var(--color-border-strong);
       border-radius: var(--radius-sm);
-      font-weight: 600;
-      min-height: var(--touch-target);
+      border-left-width: 6px;
+    }
+
+    .feedback-correct {
+      background: var(--color-surface-alt);
+      border-left-color: var(--color-success);
+    }
+
+    .feedback-correct .feedback-head {
+      color: var(--color-success);
+    }
+
+    .feedback-wrong {
+      background: var(--color-jrda-bg);
+      border-left-color: var(--color-error);
+    }
+
+    .feedback-wrong .feedback-head {
+      color: var(--color-error);
+    }
+
+    .feedback-head {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 0.8125rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .feedback-body {
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: var(--color-text);
+      margin: 0;
+    }
+
+    .feedback-rule {
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .advance {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    /* ─── Pills ─── */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      min-height: 44px;
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: var(--shadow-hard);
+      cursor: pointer;
       text-decoration: none;
 
-      &.primary {
-        background: var(--color-primary);
-        color: #fff;
-        &:hover { background: var(--color-primary-dark); text-decoration: none; }
-      }
-
-      &.secondary {
-        background: var(--color-border-light);
-        color: var(--color-text);
-        &:hover { background: var(--color-border); text-decoration: none; }
+      &:hover:not(:disabled) {
+        transform: translate(1px, 1px);
+        box-shadow: 0 1px 0 rgba(11, 16, 38, 0.9);
+        text-decoration: none;
       }
     }
 
-    .next-btn {
-      align-self: flex-end;
+    .pill-primary {
+      background: var(--color-primary);
+      color: #fff;
     }
 
-    // Results
+    .pill-ghost {
+      background: var(--color-surface);
+      color: var(--color-text);
+    }
+
+    /* ─── Results ─── */
     .results {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--space-lg);
+      gap: 16px;
+      padding: 20px 0;
       text-align: center;
-
-      h1 {
-        font-size: var(--font-size-2xl);
-        color: var(--color-primary);
-      }
     }
 
-    .score-circle {
+    .results h1 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 2.75rem;
+      letter-spacing: -0.02em;
+      margin: 6px 0 4px;
+    }
+
+    .ring {
+      position: relative;
+      width: 200px;
+      height: 200px;
+    }
+
+    .ring-label {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      border: 6px solid var(--color-success);
-
-      &[data-grade='good'] { border-color: var(--color-success); }
-      &[data-grade='ok'] { border-color: var(--color-level-2); }
-      &[data-grade='needs-work'] { border-color: var(--color-error); }
     }
 
-    .score-value {
-      font-family: var(--font-heading);
-      font-size: var(--font-size-2xl);
-      font-weight: 800;
+    .ring-pct {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 2.875rem;
+      line-height: 1;
+      color: var(--color-text);
     }
 
-    .score-label {
-      font-size: var(--font-size-sm);
+    .ring-fraction {
+      margin-top: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
       color: var(--color-text-muted);
     }
 
-    .grade-text {
-      font-size: var(--font-size-lg);
-      font-weight: 600;
-    }
-
-    .results-review {
-      width: 100%;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-md);
-
-      h2 {
-        font-size: var(--font-size-lg);
-      }
-    }
-
-    .review-item {
-      padding: var(--space-md);
-      background: var(--color-surface);
-      border-radius: var(--radius-md);
-      border-left: 3px solid var(--color-border);
-
-      &.correct { border-left-color: var(--color-success); }
-      &.wrong { border-left-color: var(--color-error); }
-
-      .review-question { font-weight: 600; margin-bottom: var(--space-xs); }
-      .review-answer { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-xs); }
-      .review-explanation { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+    .grade-blurb {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.125rem;
+      color: var(--color-text);
     }
 
     .results-actions {
       display: flex;
-      gap: var(--space-md);
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .review {
+      width: 100%;
+      text-align: left;
+      margin-top: 24px;
+    }
+
+    .section-head {
+      margin-bottom: var(--space-sm);
+    }
+
+    .section-head h2 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 1.375rem;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+
+    .review-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .review-row {
+      background: var(--color-surface);
+      border: var(--stroke) solid var(--color-border-strong);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      border-left-width: 6px;
+    }
+
+    .row-correct {
+      border-left-color: var(--color-success);
+    }
+
+    .row-wrong {
+      border-left-color: var(--color-error);
+    }
+
+    .review-q {
+      margin: 0 0 6px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: var(--color-text);
+    }
+
+    .review-a {
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+    }
+
+    .review-expl {
+      margin: 6px 0 0;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      color: var(--color-text-muted);
+    }
+
+    .not-found {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 32px 0;
+      color: var(--color-text-muted);
     }
   `,
 })
@@ -385,6 +689,9 @@ export class QuizComponent implements OnInit {
 
   private readonly quizService = inject(QuizService);
   private readonly progressService = inject(ProgressService);
+  private readonly dailyJam = inject(DailyJamService);
+
+  protected readonly isDailyMode = computed(() => this.topicId() === 'daily');
 
   protected readonly questions = signal<QuizQuestion[]>([]);
   protected readonly currentIndex = signal(0);
@@ -405,9 +712,19 @@ export class QuizComponent implements OnInit {
     return this.questions()[this.currentIndex()] ?? null;
   });
 
+  /** Progress bar uses idx / total — empty at Q1, full only after the last Q. */
+  protected readonly progressPct = computed(() => {
+    const total = this.questions().length;
+    if (!total) return 0;
+    return Math.round((this.currentIndex() / total) * 100);
+  });
+
   protected readonly score = computed(() => {
     const qs = this.questions();
-    return this.answers().reduce((sum, ans, i) => sum + (ans === qs[i]?.correctIndex ? 1 : 0), 0);
+    return this.answers().reduce(
+      (sum, ans, i) => sum + (ans === qs[i]?.correctIndex ? 1 : 0),
+      0,
+    );
   });
 
   protected readonly percentage = computed(() => {
@@ -416,23 +733,40 @@ export class QuizComponent implements OnInit {
     return Math.round((this.score() / total) * 100);
   });
 
-  protected readonly grade = computed(() => {
-    const pct = this.percentage();
-    if (pct >= 80) return 'good';
-    if (pct >= 60) return 'ok';
-    return 'needs-work';
-  });
-
   protected readonly gradeText = computed(() => {
     const pct = this.percentage();
     if (pct >= 90) return 'Amazing! You really know your rules!';
     if (pct >= 80) return 'Great job! Keep it up!';
     if (pct >= 60) return 'Good effort! Review the rules you missed.';
-    return 'Keep studying! You\'ll get there!';
+    return "Keep studying! You'll get there!";
+  });
+
+  protected readonly gradeStroke = computed(() => {
+    const pct = this.percentage();
+    if (pct >= 80) return 'var(--color-success)';
+    if (pct >= 60) return '#ffb703';
+    return 'var(--color-error)';
+  });
+
+  /** 2π × r where r = 86 — used by the score ring dasharray. */
+  private readonly ringCircumference = 2 * Math.PI * 86;
+
+  protected readonly ringDash = computed(() => {
+    const filled = (this.percentage() / 100) * this.ringCircumference;
+    return `${filled} ${this.ringCircumference}`;
   });
 
   ngOnInit(): void {
     this.startQuiz();
+  }
+
+  protected optionState(i: number, q: QuizQuestion): 'idle' | 'selected' | 'correct' | 'wrong' {
+    if (!this.answered()) {
+      return this.selectedOption() === i ? 'selected' : 'idle';
+    }
+    if (i === q.correctIndex) return 'correct';
+    if (this.selectedOption() === i) return 'wrong';
+    return 'idle';
   }
 
   protected selectOption(index: number): void {
@@ -449,10 +783,11 @@ export class QuizComponent implements OnInit {
   protected nextQuestion(): void {
     const nextIdx = this.currentIndex() + 1;
     if (nextIdx >= this.questions().length) {
+      const attemptTopicId = this.isDailyMode() ? this.dailyJam.todayTopicId() : this.topicId();
       this.progressService.recordQuizAttempt(
-        this.topicId(),
+        attemptTopicId,
         this.score(),
-        this.questions().length
+        this.questions().length,
       );
       this.showResults.set(true);
     } else {
@@ -468,7 +803,12 @@ export class QuizComponent implements OnInit {
   }
 
   private startQuiz(): void {
-    this.questions.set(this.quizService.getShuffledQuestions(this.topicId()));
+    if (this.isDailyMode()) {
+      const q = this.dailyJam.todayQuestion();
+      this.questions.set(q ? [q] : []);
+    } else {
+      this.questions.set(this.quizService.getShuffledQuestions(this.topicId()));
+    }
     this.currentIndex.set(0);
     this.selectedOption.set(-1);
     this.answered.set(false);

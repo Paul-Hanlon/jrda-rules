@@ -1,11 +1,36 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanMatchFn, Routes } from '@angular/router';
+import { UserProfileService } from './services/user-profile.service';
+
+const isParent: CanMatchFn = () =>
+  inject(UserProfileService).profile()?.accountType === 'parent';
 
 export const routes: Routes = [
   {
+    // Parents land on the custodian dashboard when visiting root.
     path: '',
+    pathMatch: 'full',
+    canMatch: [isParent],
+    title: 'Parent Dashboard',
+    loadComponent: () =>
+      import('./features/custodian/custodian-dashboard.component').then(
+        (m) => m.CustodianDashboardComponent,
+      ),
+  },
+  {
+    path: '',
+    pathMatch: 'full',
     title: 'Dashboard',
     loadComponent: () =>
       import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+  },
+  {
+    path: 'custodian',
+    title: 'Parent Dashboard',
+    loadComponent: () =>
+      import('./features/custodian/custodian-dashboard.component').then(
+        (m) => m.CustodianDashboardComponent,
+      ),
   },
   {
     path: 'rules',
@@ -56,6 +81,12 @@ export const routes: Routes = [
     title: 'Support',
     loadComponent: () =>
       import('./features/support/support.component').then((m) => m.SupportComponent),
+  },
+  {
+    path: 'profile',
+    title: 'Profile',
+    loadComponent: () =>
+      import('./features/profile/profile.component').then((m) => m.ProfileComponent),
   },
   {
     path: '**',
