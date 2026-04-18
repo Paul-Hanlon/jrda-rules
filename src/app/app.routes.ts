@@ -2,15 +2,20 @@ import { inject } from '@angular/core';
 import { CanMatchFn, Routes } from '@angular/router';
 import { UserProfileService } from './services/user-profile.service';
 
-const isParent: CanMatchFn = () =>
-  inject(UserProfileService).profile()?.accountType === 'parent';
+const isParentOnCustodianHome: CanMatchFn = () => {
+  const s = inject(UserProfileService);
+  // Parents get the custodian dashboard at `/` ONLY when they haven't stepped
+  // into a junior. Stepping in flips `inJuniorView`, which makes this guard
+  // fall through to the skater Dashboard route below.
+  return s.profile()?.accountType === 'parent' && !s.inJuniorView();
+};
 
 export const routes: Routes = [
   {
     // Parents land on the custodian dashboard when visiting root.
     path: '',
     pathMatch: 'full',
-    canMatch: [isParent],
+    canMatch: [isParentOnCustodianHome],
     title: 'Parent Dashboard',
     loadComponent: () =>
       import('./features/custodian/custodian-dashboard.component').then(

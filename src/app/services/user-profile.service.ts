@@ -33,6 +33,22 @@ export class UserProfileService {
   /** User has finished onboarding and should see the main shell. */
   readonly isNewUser = computed(() => !this._profile()?.onboarded);
 
+  /**
+   * Transient (not persisted) flag: a parent has stepped into a junior's
+   * view. When true, the `/` route falls through to the skater dashboard
+   * instead of the custodian dashboard. Cleared when the custodian page
+   * mounts (so returning to the parent home resets the mode).
+   */
+  readonly inJuniorView = signal(false);
+
+  enterJuniorView(): void {
+    this.inJuniorView.set(true);
+  }
+
+  exitJuniorView(): void {
+    this.inJuniorView.set(false);
+  }
+
   readonly derivedRole = computed<DerivedRole>(() => roleFromAge(this._profile()?.age));
   readonly juniors = computed<JuniorProfile[]>(() => this._profile()?.juniors ?? []);
   readonly activeJunior = computed<JuniorProfile | null>(() => {

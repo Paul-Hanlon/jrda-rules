@@ -373,13 +373,25 @@ export class HeaderComponent {
 
   protected readonly homeRoute = computed(() => (this.isParent() ? '/custodian' : '/'));
 
+  /** URL-level check used for nav-link active states. */
   protected readonly isOnDashboard = computed(() => {
     const u = this.currentUrl();
     return u === '/' || u === '/custodian';
   });
 
+  /**
+   * Whether the current view is the custodian component (not just the URL).
+   * Parents at `/` without having stepped in still see the custodian, so
+   * the banner must account for that.
+   */
+  private readonly isOnCustodianComponent = computed(() => {
+    const u = this.currentUrl();
+    if (u === '/custodian') return true;
+    return u === '/' && !this.profileService.inJuniorView();
+  });
+
   protected readonly showParentBanner = computed(
-    () => this.isParent() && !this.isOnDashboard(),
+    () => this.isParent() && !this.isOnCustodianComponent(),
   );
 
   protected readonly navItems = computed<NavItem[]>(() => {
@@ -411,12 +423,12 @@ export class HeaderComponent {
   );
 
   protected readonly parentLabel = computed(() => {
-    if (this.isOnDashboard()) return 'Parent';
+    if (this.isOnCustodianComponent()) return 'Parent';
     return this.profileService.profile()?.skateName ?? 'Parent';
   });
 
   protected readonly parentSubLabel = computed(() => {
-    if (this.isOnDashboard()) {
+    if (this.isOnCustodianComponent()) {
       const n = this.profileService.juniors().length;
       return `${n} skater${n === 1 ? '' : 's'}`;
     }
@@ -428,6 +440,7 @@ export class HeaderComponent {
   }
 
   protected goToCustodian(): void {
+    this.profileService.exitJuniorView();
     this.router.navigate(['/custodian']);
   }
 

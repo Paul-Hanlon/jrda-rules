@@ -260,11 +260,13 @@ export class JuniorSwitcherComponent {
 
   protected pick(index: number): void {
     this.profileService.setActiveJunior(index);
+    this.profileService.enterJuniorView();
     this.closed.emit();
     this.router.navigate(['/']);
   }
 
   protected goToCustodian(): void {
+    this.profileService.exitJuniorView();
     this.closed.emit();
     this.router.navigate(['/custodian']);
   }

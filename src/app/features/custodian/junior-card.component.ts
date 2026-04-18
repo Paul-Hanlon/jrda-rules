@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { UserProfileService } from '../../services/user-profile.service';
+import { RemoteConfigService } from '../../services/remote-config.service';
 import { JuniorLogin, JuniorProfile } from '../../models/user-profile';
 import { IconComponent, IconName } from '../../shared/components/icon/icon.component';
 import { JerseyNumberComponent } from '../../shared/components/jersey-number/jersey-number.component';
@@ -97,7 +98,8 @@ type LoginMode = 'none' | 'form' | 'view';
         </div>
       </div>
 
-      <!-- Login strip -->
+      <!-- Login strip (gated on the auth flag — no sign-in backend, no login UI) -->
+      @if (loginEnabled()) {
       <div class="login-strip" [attr.data-mode]="mode()">
         @switch (mode()) {
           @case ('none') {
@@ -217,6 +219,7 @@ type LoginMode = 'none' | 'form' | 'view';
           }
         }
       </div>
+      }
     </article>
   `,
   styles: `
@@ -699,6 +702,10 @@ export class JuniorCardComponent {
   readonly remove = output<void>();
 
   private readonly profileService = inject(UserProfileService);
+  private readonly remoteConfig = inject(RemoteConfigService);
+
+  /** Login strip is gated on the `auth` remote-config flag. */
+  protected readonly loginEnabled = this.remoteConfig.flag('auth');
 
   protected readonly mode = signal<LoginMode>('none');
   protected readonly username = signal('');

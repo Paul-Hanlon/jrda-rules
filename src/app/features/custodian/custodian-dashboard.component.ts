@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserProfileService } from '../../services/user-profile.service';
 import { JuniorProfile } from '../../models/user-profile';
@@ -300,7 +300,7 @@ import { JuniorCardComponent, JuniorSummary } from './junior-card.component';
     }
   `,
 })
-export class CustodianDashboardComponent {
+export class CustodianDashboardComponent implements OnInit {
   private readonly profileService = inject(UserProfileService);
   private readonly router = inject(Router);
 
@@ -310,8 +310,15 @@ export class CustodianDashboardComponent {
     () => this.juniors().filter((j) => !!j.login).length,
   );
 
+  ngOnInit(): void {
+    // Returning to the parent home always resets the junior-view flag so the
+    // `/` route is owned by the custodian again until the parent steps in.
+    this.profileService.exitJuniorView();
+  }
+
   protected stepInto(index: number): void {
     this.profileService.setActiveJunior(index);
+    this.profileService.enterJuniorView();
     this.router.navigate(['/']);
   }
 

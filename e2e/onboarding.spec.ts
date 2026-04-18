@@ -328,14 +328,44 @@ test.describe('Onboarding — Derby Rules', () => {
     await card.locator('.head').click();
     await expect(page).toHaveURL(/\/$/);
 
-    // On /rules the parent banner should appear (not on dashboard routes).
+    // SKATER dashboard renders (not custodian) because inJuniorView flipped.
+    await expect(page.locator('app-dashboard')).toBeVisible();
+    await expect(page.locator('app-custodian-dashboard')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Test Kid', exact: true })).toBeVisible();
+
+    // Parent-mode banner visible over the skater dashboard (stepped in).
+    await expect(page.locator('.parent-banner')).toContainText(/parent mode · viewing test kid/i);
+
+    // On /rules the banner still shows.
     await page.goto('/rules');
     await expect(page.locator('.parent-banner')).toContainText(/parent mode · viewing test kid/i);
     await expect(page.getByRole('button', { name: /back to parent dashboard/i })).toBeVisible();
 
-    // Click the banner button → back to custodian.
+    // Click the banner button → back to custodian; banner goes away.
     await page.getByRole('button', { name: /back to parent dashboard/i }).click();
     await expect(page).toHaveURL(/\/custodian$/);
+    await expect(page.locator('.parent-banner')).toHaveCount(0);
+  });
+
+  test('Custodian: login strip hidden when auth flag is off', async ({ page }) => {
+    await startFresh(page, { parentOnboarding: true });
+    await page.getByRole('button', { name: /i'm a parent or guardian/i }).click();
+    await page.getByRole('button', { name: /add first junior/i }).click();
+
+    await page.locator('#jr-name').fill('No Auth');
+    await fillDobPicker(page, dobFor(10));
+    await page.getByRole('radio', { name: 'L1' }).click();
+    await page.getByRole('button', { name: /add skater/i }).click();
+    await page.getByRole('button', { name: /we're done — finish setup/i }).click();
+
+    // With auth off, finishParent navigates directly — no account prompt.
+    await expect(page).toHaveURL(/\/custodian$|\/$/);
+
+    const card = page.locator('app-junior-card').first();
+    await expect(card).toBeVisible();
+    // No login strip, no Create-login CTA when auth is off.
+    await expect(card.locator('.login-strip')).toHaveCount(0);
+    await expect(card.getByRole('button', { name: /create login/i })).toHaveCount(0);
   });
 
   test('Back button walks through history from dob', async ({ page }) => {
