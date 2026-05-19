@@ -13,6 +13,9 @@ import { SkillLevelService } from '../../services/skill-level.service';
 import { ReadingAgeService } from '../../services/reading-age.service';
 import { AuthService } from '../../services/auth.service';
 import { RemoteConfigService } from '../../services/remote-config.service';
+import { ContentLoaderService } from '../../services/content-loader.service';
+import { RulesetService } from '../../services/ruleset.service';
+import { BRANDING } from '../../config/branding';
 import { DobPickerComponent } from './dob-picker.component';
 import {
   JuniorProfile,
@@ -24,6 +27,7 @@ import { SkillLevel } from '../../models/skill-level';
 
 type Step =
   | 'welcome'
+  | 'rulesetPicker'
   | 'skaterName'
   | 'skaterNumber'
   | 'dob'
@@ -43,6 +47,7 @@ interface SkaterDraft {
   dob: string;
   team: string;
   level: SkillLevel;
+  rulesetId: string;
 }
 
 interface LevelOption {
@@ -115,6 +120,33 @@ interface LevelOption {
                 Already have an account? Sign in
               </button>
             }
+          }
+
+          <!-- SKATER · RULESET -->
+          @case ('rulesetPicker') {
+            <div class="kicker">First up</div>
+            <h1>Which ruleset are you learning?</h1>
+            <p class="subtitle">Pick the rules your league plays by — you can change this later.</p>
+            <div class="choice-list">
+              @for (r of availableRulesets(); track r.id) {
+                <button
+                  type="button"
+                  class="choice-card"
+                  [class.selected]="skater().rulesetId === r.id"
+                  (click)="patchSkater({ rulesetId: r.id })"
+                >
+                  <span class="choice-text">
+                    <span class="choice-title">{{ r.name }}</span>
+                  </span>
+                </button>
+              }
+            </div>
+            <div class="actions end">
+              <button type="button" class="btn btn-primary" (click)="go('skaterName')">
+                Next
+                <app-icon name="chev-right" [size]="18" [strokeWidth]="2.4" />
+              </button>
+            </div>
           }
 
           <!-- SKATER · NAME -->
@@ -409,6 +441,26 @@ interface LevelOption {
                   }
                 </div>
               </div>
+
+              @if (rulesetPickerEnabled()) {
+                <div class="field full">
+                  <span class="label-as-span">Ruleset</span>
+                  <div class="seg-row" role="radiogroup" aria-label="Ruleset">
+                    @for (r of availableRulesets(); track r.id) {
+                      <button
+                        type="button"
+                        role="radio"
+                        class="seg"
+                        [class.on]="parentDraft().rulesetId === r.id"
+                        [attr.aria-checked]="parentDraft().rulesetId === r.id"
+                        (click)="patchParentDraft({ rulesetId: r.id })"
+                      >
+                        {{ r.name }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
 
               @if (parentDraftAge() !== null) {
                 <div class="age-pill full">Age: <strong>{{ parentDraftAge() }}</strong></div>
@@ -1158,8 +1210,15 @@ export class OnboardingComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly remoteConfig = inject(RemoteConfigService);
+  private readonly contentLoader = inject(ContentLoaderService);
+  private readonly rulesetService = inject(RulesetService);
   protected readonly authEnabled = this.remoteConfig.flag('auth');
   protected readonly parentOnboardingEnabled = this.remoteConfig.flag('parentOnboarding');
+  protected readonly multiRulesetEnabled = this.remoteConfig.flag('multiRuleset');
+  protected readonly availableRulesets = this.contentLoader.availableRulesets;
+  protected readonly rulesetPickerEnabled = computed(
+    () => this.multiRulesetEnabled() && this.availableRulesets().length > 1,
+  );
 
   protected readonly levels: SkillLevel[] = ['L1', 'L2', 'L3'];
 
@@ -1196,6 +1255,7 @@ export class OnboardingComponent {
     dob: '',
     team: '',
     level: 'L2',
+    rulesetId: BRANDING.defaultRulesetId,
   });
   protected readonly parentDraft = signal<SkaterDraft>({
     skateName: '',
@@ -1203,6 +1263,7 @@ export class OnboardingComponent {
     dob: '',
     team: '',
     level: 'L2',
+    rulesetId: BRANDING.defaultRulesetId,
   });
   protected readonly juniors = signal<JuniorProfile[]>([]);
 
@@ -1229,7 +1290,10 @@ export class OnboardingComponent {
     const m = this.mode();
     const accountStep = this.authEnabled() ? 1 : 0;
     if (m === 'parent') return 4 + accountStep;
-    if (m === 'skater') return (this.skaterIsJunior() ? 6 : 5) + accountStep;
+    if (m === 'skater') {
+      const rulesetStep = this.rulesetPickerEnabled() ? 1 : 0;
+      return (this.skaterIsJunior() ? 6 : 5) + accountStep + rulesetStep;
+    }
     return 1;
   });
 
@@ -1237,8 +1301,10 @@ export class OnboardingComponent {
     const s = this.step();
     const m = this.mode();
     if (s === 'welcome') return 1;
+    if (s === 'rulesetPicker') return 2;
     if (m === 'skater') {
-      if (s === 'account') return this.skaterIsJunior() ? 7 : 6;
+      const off = this.rulesetPickerEnabled() ? 1 : 0;
+      if (s === 'account') return (this.skaterIsJunior() ? 7 : 6) + off;
       const map: Partial<Record<Step, number>> = {
         skaterName: 2,
         skaterNumber: 3,
@@ -1247,7 +1313,7 @@ export class OnboardingComponent {
         team: 5,
         level: 6,
       };
-      return map[s] ?? 1;
+      return (map[s] ?? 1) + off;
     }
     if (m === 'parent') {
       const map: Partial<Record<Step, number>> = {
@@ -1306,7 +1372,7 @@ export class OnboardingComponent {
 
   protected pickSkater(): void {
     this.mode.set('skater');
-    this.go('skaterName');
+    this.go(this.rulesetPickerEnabled() ? 'rulesetPicker' : 'skaterName');
   }
 
   protected pickParent(): void {
@@ -1356,6 +1422,7 @@ export class OnboardingComponent {
       dob: s.dob,
       team: '',
       level: 'L2',
+      rulesetId: s.rulesetId,
     });
     this.stack.set(['welcome', 'parentIntro', 'juniorAdd']);
   }
@@ -1379,6 +1446,7 @@ export class OnboardingComponent {
       dob: s.dob,
       team: s.team.trim() || (isJunior ? 'Unassigned' : ''),
       level,
+      rulesetId: s.rulesetId,
       readingAge: this.readingAgeFromAge(age),
     });
 
@@ -1397,6 +1465,7 @@ export class OnboardingComponent {
       dob: draft.dob,
       team: draft.team.trim() || 'Unassigned',
       level: draft.level,
+      rulesetId: draft.rulesetId,
     };
     this.juniors.update((all) => [...all, jr]);
     this.parentDraft.set({
@@ -1405,6 +1474,7 @@ export class OnboardingComponent {
       dob: '',
       team: '',
       level: 'L2',
+      rulesetId: BRANDING.defaultRulesetId,
     });
     this.go('juniorAddMore');
   }
@@ -1428,6 +1498,7 @@ export class OnboardingComponent {
       dob: active.dob,
       team: active.team,
       level: active.level,
+      rulesetId: active.rulesetId,
       juniors,
       activeJuniorIndex: 0,
       readingAge: this.readingAgeFromAge(age),
@@ -1503,6 +1574,7 @@ export class OnboardingComponent {
     this.profileService.save({ ...profile, landed: true });
     this.skillLevelService.setLevel(profile.level);
     if (profile.readingAge) this.readingAgeService.setReadingAge(profile.readingAge);
+    if (profile.rulesetId) this.rulesetService.setRuleset(profile.rulesetId);
     // Keep derived role consistent for consumers that still read `role`.
     const _derived = roleFromAge(profile.age);
     void _derived;
