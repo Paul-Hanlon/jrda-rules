@@ -43,9 +43,9 @@ __screenshots__/
 .firebase/
 
 # Docs build output
-jrda-rules-docs/node_modules
-jrda-rules-docs/build
-jrda-rules-docs/.docusaurus
+derby-rules-docs/node_modules
+derby-rules-docs/build
+derby-rules-docs/.docusaurus
 
 # Playwright
 /test-results

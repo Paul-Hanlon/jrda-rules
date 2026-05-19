@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'JRDA Rules',
-  tagline: 'Interactive learning for Junior Roller Derby rules',
+  title: 'Derby Rules',
+  tagline: 'Interactive learning for Roller Derby rules',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -37,7 +37,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/Paul-Hanlon/jrda-rules/tree/main/jrda-rules-docs/',
+          editUrl: 'https://github.com/tbg-development/derby-rules/tree/main/derby-rules-docs/',
         },
         blog: false,
         theme: {
@@ -53,9 +53,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'JRDA Rules',
+      title: 'Derby Rules',
       logo: {
-        alt: 'JRDA Rules Logo',
+        alt: 'Derby Rules Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -66,7 +66,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/Paul-Hanlon/jrda-rules',
+          href: 'https://github.com/tbg-development/derby-rules',
           label: 'GitHub',
           position: 'right',
         },
@@ -97,12 +97,12 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/Paul-Hanlon/jrda-rules',
+              href: 'https://github.com/tbg-development/derby-rules',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} JRDA Rules. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Derby Rules. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

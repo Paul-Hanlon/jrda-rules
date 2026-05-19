@@ -27,15 +27,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: jrda-rules-docs/package-lock.json
+          cache-dependency-path: derby-rules-docs/package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: jrda-rules-docs
+        working-directory: derby-rules-docs
 
       - name: Build
         run: npm run build
-        working-directory: jrda-rules-docs
+        working-directory: derby-rules-docs
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -43,7 +43,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: jrda-rules-docs/build
+          path: derby-rules-docs/build
 
   deploy:
     environment:

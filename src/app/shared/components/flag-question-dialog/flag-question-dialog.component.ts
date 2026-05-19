@@ -184,7 +184,7 @@ export class FlagQuestionDialogComponent {
       ].join('\n')
     );
 
-    const url = `https://github.com/Paul-Hanlon/jrda-rules/issues/new?title=${title}&body=${body}&labels=question-flag`;
+    const url = `https://github.com/tbg-development/derby-rules/issues/new?title=${title}&body=${body}&labels=question-flag`;
     window.open(url, '_blank', 'noopener');
     this.closed.emit();
   }

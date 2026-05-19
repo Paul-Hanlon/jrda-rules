@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist/jrda-rules/browser",
+    "public": "dist/derby-rules/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
