@@ -4,10 +4,20 @@ import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
+    // Seed a landed + onboarded profile so App renders the main shell
+    // (header + router outlet) rather than the landing / onboarding gate.
+    localStorage.setItem(
+      'jrda-user-profile',
+      JSON.stringify({ role: 'skater', level: 'L3', landed: true, onboarded: true }),
+    );
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([])],
     }).compileComponents();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   it('should create the app', () => {
