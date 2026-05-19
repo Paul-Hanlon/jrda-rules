@@ -7,6 +7,10 @@ import { ProgressService } from '../../services/progress.service';
 import { JerseyNumberComponent } from '../../shared/components/jersey-number/jersey-number.component';
 import { IconComponent, IconName } from '../../shared/components/icon/icon.component';
 import { TrackOvalComponent } from '../../shared/components/track-oval/track-oval.component';
+import { RemoteConfigService } from '../../services/remote-config.service';
+import { ContentLoaderService } from '../../services/content-loader.service';
+import { RulesetService } from '../../services/ruleset.service';
+import { BRANDING } from '../../config/branding';
 import { ReadingAge } from '../../models/reading-age';
 import { SkillLevel } from '../../models/skill-level';
 
@@ -158,6 +162,32 @@ interface StatTile {
               }
             </label>
           </form>
+
+          @if (rulesetPickerEnabled()) {
+            <div class="junior-block">
+              <div class="junior-group">
+                <div class="group-label">
+                  <span class="group-label-primary">Ruleset</span>
+                  <span class="group-label-sub">which rules you're learning</span>
+                </div>
+                <div class="seg-row" role="radiogroup" aria-label="Ruleset">
+                  @for (r of availableRulesets(); track r.id) {
+                    <button
+                      type="button"
+                      role="radio"
+                      class="seg"
+                      [class.on]="rulesetDraft() === r.id"
+                      [attr.aria-checked]="rulesetDraft() === r.id"
+                      [disabled]="!editing()"
+                      (click)="rulesetDraft.set(r.id)"
+                    >
+                      {{ r.name }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
 
           @if (isJuniorDraft()) {
             <div class="junior-block">
@@ -627,6 +657,15 @@ export class ProfileComponent {
   private readonly skillLevelService = inject(SkillLevelService);
   private readonly readingAgeService = inject(ReadingAgeService);
   private readonly progressService = inject(ProgressService);
+  private readonly remoteConfig = inject(RemoteConfigService);
+  private readonly contentLoader = inject(ContentLoaderService);
+  private readonly rulesetService = inject(RulesetService);
+
+  protected readonly multiRulesetEnabled = this.remoteConfig.flag('multiRuleset');
+  protected readonly availableRulesets = this.contentLoader.availableRulesets;
+  protected readonly rulesetPickerEnabled = computed(
+    () => this.multiRulesetEnabled() && this.availableRulesets().length > 1,
+  );
 
   protected readonly levelChoices: LevelChoice[] = [
     { value: 'L1', label: 'L1 · New skater' },
@@ -643,6 +682,7 @@ export class ProfileComponent {
   protected readonly teamDraft = signal('');
   protected readonly levelDraft = signal<SkillLevel>('L1');
   protected readonly readingAgeDraft = signal<ReadingAge>('13+');
+  protected readonly rulesetDraft = signal<string>(BRANDING.defaultRulesetId);
 
   protected readonly skateName = computed(() => this.profileService.profile()?.skateName ?? '');
   protected readonly number = computed(() => this.profileService.profile()?.number ?? '00');
@@ -700,6 +740,7 @@ export class ProfileComponent {
     const current = this.profileService.getOrDefault();
     const nextLevel = this.levelDraft();
     const nextReadingAge = this.readingAgeDraft();
+    const pickRuleset = this.rulesetPickerEnabled();
 
     this.profileService.save({
       ...current,
@@ -709,10 +750,12 @@ export class ProfileComponent {
       team: this.teamDraft().trim(),
       level: nextLevel,
       readingAge: nextReadingAge,
+      ...(pickRuleset ? { rulesetId: this.rulesetDraft() } : {}),
     });
 
     this.skillLevelService.setLevel(nextLevel);
     this.readingAgeService.setReadingAge(nextReadingAge);
+    if (pickRuleset) this.rulesetService.setRuleset(this.rulesetDraft());
     this.editing.set(false);
   }
 
@@ -736,5 +779,6 @@ export class ProfileComponent {
     this.teamDraft.set(p.team ?? '');
     this.levelDraft.set(p.level);
     this.readingAgeDraft.set(p.readingAge ?? '13+');
+    this.rulesetDraft.set(this.rulesetService.selectedRulesetId());
   }
 }

@@ -18,6 +18,7 @@ const DEFAULTS: Record<string, FlagValue> = {
   badge: false,
   auth: false,
   parentOnboarding: false,
+  multiRuleset: false,
 };
 
 /**
