@@ -22,7 +22,7 @@ interface ScenarioRowVM {
         <div class="kicker">Real game scenarios</div>
         <h1>Casebook</h1>
         <p class="intro">
-          What's the right call? Work through real situations from the JRDA casebook.
+          What's the right call? Work through real situations from the casebook.
         </p>
       </header>
 

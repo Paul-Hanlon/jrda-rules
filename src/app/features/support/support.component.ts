@@ -463,8 +463,8 @@ export class SupportComponent {
 
   protected async share(option: SupportOption) {
     const shareData = {
-      title: 'JRDA Rules',
-      text: 'Learn the rules of junior roller derby with interactive quizzes and a searchable rulebook.',
+      title: 'Derby Rules',
+      text: 'Learn the rules of roller derby with interactive quizzes and a searchable rulebook.',
       url: option.url,
     };
 

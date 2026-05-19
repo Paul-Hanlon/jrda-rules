@@ -36,7 +36,7 @@ interface NavItem {
           <app-logo-mark [size]="38" primary="var(--color-text)" accent="var(--color-primary)" />
           <span class="logo-text">
             <span class="wordmark">DERBY RULES</span>
-            <span class="tagline">WFTDA &middot; JRDA &middot; for every skater</span>
+            <span class="tagline">for every skater</span>
           </span>
         </a>
 
