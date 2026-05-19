@@ -13,10 +13,10 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://Paul-Hanlon.github.io',
-  baseUrl: '/jrda-rules/',
-  organizationName: 'Paul-Hanlon',
-  projectName: 'jrda-rules',
+  url: 'https://tbg-development.github.io',
+  baseUrl: '/derby-rules/',
+  organizationName: 'tbg-development',
+  projectName: 'derby-rules',
   trailingSlash: false,
 
   onBrokenLinks: 'throw',
