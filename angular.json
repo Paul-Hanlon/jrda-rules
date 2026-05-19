@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "jrda-rules": {
+    "derby-rules": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -67,10 +67,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "jrda-rules:build:production"
+              "buildTarget": "derby-rules:build:production"
             },
             "development": {
-              "buildTarget": "jrda-rules:build:development"
+              "buildTarget": "derby-rules:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -529,7 +529,7 @@ export class SupportComponent {
       title: 'Report issues',
       description: 'Found an incorrect rule or a bug? Let us know so we can fix it for everyone.',
       icon: 'flag',
-      url: 'https://github.com/Paul-Hanlon/jrda-rules/issues',
+      url: 'https://github.com/tbg-development/derby-rules/issues',
       linkText: 'Open an issue',
       accent: 'primary',
     },
