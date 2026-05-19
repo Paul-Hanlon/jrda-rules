@@ -1,4 +1,5 @@
 import { SkillLevel } from './skill-level';
+import type { ProvenanceMeta } from './ruleset';
 
 export interface Rule {
   id: string;
@@ -6,8 +7,11 @@ export interface Rule {
   title: string;
   content: string;
   skillLevels: SkillLevel[];
+  /** @deprecated superseded by `_meta.addendumText`. */
   jrdaAddendum?: string;
   subrules?: Rule[];
+  /** Merge provenance — present on rules served by the loader. */
+  _meta?: ProvenanceMeta;
 }
 
 export interface RuleSection {

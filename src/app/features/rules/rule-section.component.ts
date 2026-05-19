@@ -12,14 +12,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RulesService } from '../../services/rules.service';
 import { ProgressService } from '../../services/progress.service';
-import { JrdaBadgeComponent } from '../../shared/components/jrda-badge/jrda-badge.component';
+import { ContentLoaderService } from '../../services/content-loader.service';
+import { RulesetBadgeComponent } from '../../shared/components/ruleset-badge/ruleset-badge.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 import { Rule, RuleSection } from '../../models/rule';
 
 @Component({
   selector: 'app-rule-section',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, JrdaBadgeComponent, IconComponent],
+  imports: [RouterLink, RulesetBadgeComponent, IconComponent],
   template: `
     <div class="rule-section">
       @if (section(); as s) {
@@ -54,8 +55,8 @@ import { Rule, RuleSection } from '../../models/rule';
               >
                 <span class="rule-num">{{ rule.number }}</span>
                 <span class="rule-title">{{ rule.title }}</span>
-                @if (rule.jrdaAddendum) {
-                  <span class="chip chip-gold">JRDA</span>
+                @if (rule._meta?.hasAddendum) {
+                  <span class="chip chip-gold">{{ badgeLabel() }}</span>
                 }
                 <app-icon
                   [name]="open ? 'chev-up' : 'chev-down'"
@@ -68,10 +69,10 @@ import { Rule, RuleSection } from '../../models/rule';
                 <div [id]="'rule-body-' + rule.id" class="rule-body">
                   <p class="rule-content">{{ rule.content }}</p>
 
-                  @if (rule.jrdaAddendum) {
+                  @if (rule._meta?.hasAddendum) {
                     <aside class="jrda-callout">
-                      <app-jrda-badge />
-                      <p>{{ rule.jrdaAddendum }}</p>
+                      <app-ruleset-badge />
+                      <p>{{ rule._meta?.addendumText }}</p>
                     </aside>
                   }
 
@@ -86,10 +87,10 @@ import { Rule, RuleSection } from '../../models/rule';
                             }
                           </div>
                           <p class="subrule-content">{{ sub.content }}</p>
-                          @if (sub.jrdaAddendum) {
+                          @if (sub._meta?.hasAddendum) {
                             <aside class="jrda-callout">
-                              <app-jrda-badge />
-                              <p>{{ sub.jrdaAddendum }}</p>
+                              <app-ruleset-badge />
+                              <p>{{ sub._meta?.addendumText }}</p>
                             </aside>
                           }
                         </div>
@@ -379,8 +380,11 @@ export class RuleSectionComponent implements OnInit {
 
   private readonly rulesService = inject(RulesService);
   private readonly progressService = inject(ProgressService);
+  private readonly content = inject(ContentLoaderService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly badgeLabel = computed(() => this.content.activeManifest()?.badge?.label ?? '');
 
   private readonly expandedRules = signal<Set<string>>(new Set());
   private didSeed = false;

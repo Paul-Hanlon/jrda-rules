@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { RulesService } from '../../services/rules.service';
 import { SkillLevelService } from '../../services/skill-level.service';
+import { ContentLoaderService } from '../../services/content-loader.service';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 import { RuleSection } from '../../models/rule';
 
@@ -13,7 +14,7 @@ import { RuleSection } from '../../models/rule';
     <section class="rules-browser">
       <header class="page-head">
         <div class="kicker">03 · Rules Browser</div>
-        <h1>Official JRDA Rules</h1>
+        <h1>Official {{ rulesetName() }} Rules</h1>
         <p class="intro">
           Filtered for {{ currentLevel() }} · {{ sections().length }} section{{ sections().length === 1 ? '' : 's' }}
         </p>
@@ -38,8 +39,8 @@ import { RuleSection } from '../../models/rule';
                   <span class="chip chip-neutral">
                     {{ s.rules.length }} rule{{ s.rules.length === 1 ? '' : 's' }}
                   </span>
-                  @if (hasAnyJrda(s)) {
-                    <span class="chip chip-gold">Has JRDA addendum</span>
+                  @if (hasAnyAddendum(s)) {
+                    <span class="chip chip-gold">Has {{ rulesetName() }} addendum</span>
                   }
                 </div>
               </div>
@@ -220,13 +221,15 @@ import { RuleSection } from '../../models/rule';
 export class RulesBrowserComponent {
   private readonly rulesService = inject(RulesService);
   private readonly skillLevelService = inject(SkillLevelService);
+  private readonly content = inject(ContentLoaderService);
 
   protected readonly sections = this.rulesService.sections;
   protected readonly currentLevel = this.skillLevelService.level;
+  protected readonly rulesetName = computed(() => this.content.activeManifest()?.name ?? '');
 
-  protected hasAnyJrda(section: RuleSection): boolean {
+  protected hasAnyAddendum(section: RuleSection): boolean {
     return section.rules.some(
-      (r) => !!r.jrdaAddendum || (r.subrules ?? []).some((s) => !!s.jrdaAddendum)
+      (r) => !!r._meta?.hasAddendum || (r.subrules ?? []).some((s) => !!s._meta?.hasAddendum),
     );
   }
 }

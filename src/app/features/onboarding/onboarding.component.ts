@@ -279,7 +279,7 @@ interface LevelOption {
             <p class="subtitle">
               {{
                 skaterIsJunior()
-                  ? 'Pick the JRDA skill level closest to where you are.'
+                  ? 'Pick the skill level closest to where you are.'
                   : "We'll skip ahead to full-contact content. You can adjust later."
               }}
             </p>
