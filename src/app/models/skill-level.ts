@@ -1,4 +1,5 @@
-export type SkillLevel = 'L1' | 'L2' | 'L3';
+// Ruleset-defined; historically the JRDA values 'L1' | 'L2' | 'L3'.
+export type SkillLevel = string;
 
 export interface SkillLevelInfo {
   level: SkillLevel;

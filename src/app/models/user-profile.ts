@@ -18,6 +18,7 @@ export interface JuniorProfile {
   dob?: string;
   team?: string;
   level: SkillLevel;
+  rulesetId?: string;
   login?: JuniorLogin;
 }
 
@@ -33,6 +34,7 @@ export interface UserProfile {
   accountType?: AccountType;
   level: SkillLevel;
   readingAge?: ReadingAge;
+  rulesetId?: string;
   skateName?: string;
   number?: string;
   age?: string;
