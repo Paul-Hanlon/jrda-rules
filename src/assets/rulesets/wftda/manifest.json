@@ -1,0 +1,30 @@
+{
+  "id": "wftda",
+  "name": "WFTDA",
+  "fullName": "Women's Flat Track Derby Association",
+  "description": "Base flat-track Roller Derby rules — the structural parent ruleset.",
+  "selectable": false,
+  "readingAges": [
+    { "id": "7-8", "label": "Ages 7–8" },
+    { "id": "9-10", "label": "Ages 9–10" },
+    { "id": "11-12", "label": "Ages 11–12" },
+    { "id": "13+", "label": "Ages 13 and up" }
+  ],
+  "skillLevels": [],
+  "content": {
+    "rules": "rules.json",
+    "casebook": "casebook.json",
+    "glossary": {
+      "7-8": "glossary.7-8.json",
+      "9-10": "glossary.9-10.json",
+      "11-12": "glossary.11-12.json",
+      "13+": "glossary.13+.json"
+    },
+    "quizzes": {
+      "7-8": "quizzes.7-8.json",
+      "9-10": "quizzes.9-10.json",
+      "11-12": "quizzes.11-12.json",
+      "13+": "quizzes.13+.json"
+    }
+  }
+}
