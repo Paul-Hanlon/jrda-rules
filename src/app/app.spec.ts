@@ -9,7 +9,7 @@ describe('App', () => {
     // Seed a landed + onboarded profile so App renders the main shell
     // (header + router outlet) rather than the landing / onboarding gate.
     localStorage.setItem(
-      'jrda-user-profile',
+      'derby-rules-user-profile',
       JSON.stringify({ role: 'skater', level: 'L3', landed: true, onboarded: true }),
     );
     await TestBed.configureTestingModule({

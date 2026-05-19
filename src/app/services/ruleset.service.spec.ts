@@ -27,7 +27,7 @@ describe('RulesetService', () => {
   it("an active junior's ruleset overrides the account selection", () => {
     localStorage.setItem('derby-rules-ruleset', 'wftda');
     localStorage.setItem(
-      'jrda-user-profile',
+      'derby-rules-user-profile',
       JSON.stringify({
         role: 'parent',
         level: 'L1',
