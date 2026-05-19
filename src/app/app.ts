@@ -3,14 +3,18 @@ import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { OnboardingComponent } from './features/onboarding/onboarding.component';
 import { LandingComponent } from './features/landing/landing.component';
+import { ContentLoadingComponent } from './shared/components/content-loading/content-loading.component';
 import { UserProfileService } from './services/user-profile.service';
+import { ContentLoaderService } from './services/content-loader.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HeaderComponent, OnboardingComponent, LandingComponent],
+  imports: [RouterOutlet, HeaderComponent, OnboardingComponent, LandingComponent, ContentLoadingComponent],
   template: `
     @if (!profileService.isLanded()) {
       <app-landing />
+    } @else if (contentLoader.state() !== 'ready') {
+      <app-content-loading />
     } @else if (profileService.isNewUser()) {
       <app-onboarding />
     } @else {
@@ -36,4 +40,5 @@ import { UserProfileService } from './services/user-profile.service';
 })
 export class App {
   protected readonly profileService = inject(UserProfileService);
+  protected readonly contentLoader = inject(ContentLoaderService);
 }

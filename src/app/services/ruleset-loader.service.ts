@@ -17,7 +17,7 @@ import { mergeCollection, TreeShape } from './ruleset-merge';
 /** Rules nest RuleSection -> Rule -> Rule; the engine only needs id + children. */
 type RuleNode = RuleSection | Rule;
 
-const RULES_TREE: TreeShape<RuleNode> = {
+export const RULES_TREE: TreeShape<RuleNode> = {
   childrenOf: (n) => ('rules' in n ? n.rules : n.subrules),
   withChildren: (n, c) =>
     'rules' in n ? { ...n, rules: c as Rule[] } : { ...n, subrules: c as Rule[] },

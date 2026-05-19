@@ -1,43 +1,65 @@
 /**
  * Golden-master content baseline.
  *
- * Captures the structural shape of the app's rule / casebook / quiz / glossary
- * content as it exists BEFORE the multi-ruleset migration. The committed snapshot
- * (`__snapshots__/content-baseline.spec.ts.snap`) is the migration oracle: once
- * content moves to bundled JSON + the runtime merge engine, the merged JRDA output
- * must reproduce this exact shape.
- *
- * When the data source is repointed (plan Phase 4), update the imports below to
- * read from the loader — but do NOT regenerate the snapshot. A snapshot diff then
- * means a genuine content regression.
+ * The committed snapshot (`__snapshots__/content-baseline.spec.ts.snap`) was
+ * generated from the pre-migration TS data. This spec now merges the bundled
+ * ruleset JSON through the real merge engine and summarises the JRDA result —
+ * it must still reproduce that snapshot exactly. A diff means the migrated
+ * content path no longer matches the original content.
  */
-import { RULE_SECTIONS } from './rules.data';
-import { CASEBOOK_SCENARIOS } from './casebook.data';
-import { QUIZ_DATA_BY_AGE } from './quiz-data-by-age';
-import { GLOSSARY_DATA_BY_AGE } from './glossary-data-by-age';
-import { Rule } from '../models/rule';
-import { ReadingAge } from '../models/reading-age';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { CollectionOverride, Merged } from '../models/ruleset';
+import { mergeCollection, TreeShape } from '../services/ruleset-merge';
+import { RULES_TREE } from '../services/ruleset-loader.service';
 
-const READING_AGES: ReadingAge[] = ['7-8', '9-10', '11-12', '13+'];
+const ASSETS = join(process.cwd(), 'src/assets/rulesets');
+const READING_AGES = ['7-8', '9-10', '11-12', '13+'];
 
-function summariseRule(rule: Rule): unknown {
+type Obj = Record<string, unknown>;
+
+/** RULES_TREE is typed for the rule hierarchy; the merge engine only uses ids. */
+const ID_TREE = RULES_TREE as unknown as TreeShape<{ id: string }>;
+
+function load(rel: string): CollectionOverride<{ id: string }> {
+  return JSON.parse(readFileSync(join(ASSETS, rel), 'utf-8')) as CollectionOverride<{ id: string }>;
+}
+
+/** Merge a WFTDA base file with the JRDA override file, as the loader would. */
+function merge(file: string, tree?: TreeShape<{ id: string }>): Merged<{ id: string }>[] {
+  const base = mergeCollection<{ id: string }>([], load(`wftda/${file}`), 'wftda', tree);
+  return mergeCollection<{ id: string }>(base, load(`jrda/${file}`), 'jrda', tree);
+}
+
+const rules = merge('rules.json', ID_TREE) as unknown as Obj[];
+const casebook = merge('casebook.json') as unknown as Obj[];
+const glossaryByAge = Object.fromEntries(
+  READING_AGES.map((age) => [age, merge(`glossary.${age}.json`) as unknown as Obj[]]),
+);
+const quizzesByAge = Object.fromEntries(
+  READING_AGES.map((age) => [age, merge(`quizzes.${age}.json`) as unknown as Obj[]]),
+);
+
+function summariseRule(rule: Obj): unknown {
+  const meta = rule['_meta'] as { hasAddendum?: boolean } | undefined;
   return {
-    id: rule.id,
-    number: rule.number,
-    skillLevels: [...rule.skillLevels].sort(),
-    hasAddendum: rule.jrdaAddendum != null,
-    subrules: (rule.subrules ?? []).map(summariseRule),
+    id: rule['id'],
+    number: rule['number'],
+    skillLevels: [...((rule['skillLevels'] as string[]) ?? [])].sort(),
+    hasAddendum: meta?.hasAddendum === true,
+    subrules: ((rule['subrules'] as Obj[]) ?? []).map(summariseRule),
   };
 }
 
-function countRules(rules: Rule[]): { total: number; withAddendum: number } {
+function countRules(list: Obj[]): { total: number; withAddendum: number } {
   let total = 0;
   let withAddendum = 0;
-  for (const rule of rules) {
+  for (const rule of list) {
     total += 1;
-    if (rule.jrdaAddendum != null) withAddendum += 1;
-    if (rule.subrules) {
-      const sub = countRules(rule.subrules);
+    if ((rule['_meta'] as { hasAddendum?: boolean })?.hasAddendum === true) withAddendum += 1;
+    const subrules = rule['subrules'] as Obj[] | undefined;
+    if (subrules) {
+      const sub = countRules(subrules);
       total += sub.total;
       withAddendum += sub.withAddendum;
     }
@@ -45,47 +67,50 @@ function countRules(rules: Rule[]): { total: number; withAddendum: number } {
   return { total, withAddendum };
 }
 
-const rulesSummary = RULE_SECTIONS.map((section) => ({
-  id: section.id,
-  number: section.number,
-  title: section.title,
-  rules: section.rules.map(summariseRule),
+const rulesSummary = rules.map((section) => ({
+  id: section['id'],
+  number: section['number'],
+  title: section['title'],
+  rules: (section['rules'] as Obj[]).map(summariseRule),
 }));
 
-const casebookSummary = CASEBOOK_SCENARIOS.map((scenario) => ({
-  id: scenario.id,
-  sectionId: scenario.sectionId,
-  ruleReference: scenario.ruleReference,
-  correctIndex: scenario.correctIndex,
-  choiceCount: scenario.choices.length,
-  skillLevels: [...scenario.skillLevels].sort(),
+const casebookSummary = casebook.map((scenario) => ({
+  id: scenario['id'],
+  sectionId: scenario['sectionId'],
+  ruleReference: scenario['ruleReference'],
+  correctIndex: scenario['correctIndex'],
+  choiceCount: (scenario['choices'] as unknown[]).length,
+  skillLevels: [...(scenario['skillLevels'] as string[])].sort(),
 }));
 
 const quizSummary = Object.fromEntries(
   READING_AGES.map((age) => [
     age,
-    QUIZ_DATA_BY_AGE[age].map((topic) => ({
-      id: topic.id,
-      sectionId: topic.sectionId,
-      questions: topic.questions.map((q) => ({ id: q.id, correctIndex: q.correctIndex })),
+    quizzesByAge[age].map((topic) => ({
+      id: topic['id'],
+      sectionId: topic['sectionId'],
+      questions: (topic['questions'] as Obj[]).map((q) => ({
+        id: q['id'],
+        correctIndex: q['correctIndex'],
+      })),
     })),
   ]),
 );
 
 const glossarySummary = Object.fromEntries(
-  READING_AGES.map((age) => [age, GLOSSARY_DATA_BY_AGE[age].map((term) => term.id)]),
+  READING_AGES.map((age) => [age, glossaryByAge[age].map((term) => term['id'])]),
 );
 
-const ruleCounts = countRules(RULE_SECTIONS.flatMap((section) => section.rules));
+const ruleCounts = countRules(rules.flatMap((section) => section['rules'] as Obj[]));
 
 const totals = {
-  ruleSections: RULE_SECTIONS.length,
+  ruleSections: rules.length,
   rules: ruleCounts.total,
   rulesWithAddendum: ruleCounts.withAddendum,
-  casebookScenarios: CASEBOOK_SCENARIOS.length,
-  quizTopicsByAge: Object.fromEntries(READING_AGES.map((age) => [age, QUIZ_DATA_BY_AGE[age].length])),
+  casebookScenarios: casebook.length,
+  quizTopicsByAge: Object.fromEntries(READING_AGES.map((age) => [age, quizzesByAge[age].length])),
   glossaryTermsByAge: Object.fromEntries(
-    READING_AGES.map((age) => [age, GLOSSARY_DATA_BY_AGE[age].length]),
+    READING_AGES.map((age) => [age, glossaryByAge[age].length]),
   ),
 };
 
@@ -116,8 +141,8 @@ describe('content baseline (golden master)', () => {
     expect(totals.rulesWithAddendum).toBeGreaterThan(0);
     expect(totals.casebookScenarios).toBeGreaterThan(0);
     for (const age of READING_AGES) {
-      expect(QUIZ_DATA_BY_AGE[age].length).toBeGreaterThan(0);
-      expect(GLOSSARY_DATA_BY_AGE[age].length).toBeGreaterThan(0);
+      expect(quizzesByAge[age].length).toBeGreaterThan(0);
+      expect(glossaryByAge[age].length).toBeGreaterThan(0);
     }
   });
 });

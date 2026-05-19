@@ -1,6 +1,8 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { ContentLoaderService, ContentLoadState } from './services/content-loader.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -12,7 +14,14 @@ describe('App', () => {
     );
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        // Stub the content gate as already loaded so the shell renders.
+        {
+          provide: ContentLoaderService,
+          useValue: { state: signal<ContentLoadState>('ready') } as Partial<ContentLoaderService>,
+        },
+      ],
     }).compileComponents();
   });
 

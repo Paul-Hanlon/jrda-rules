@@ -1,18 +1,20 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { GLOSSARY_DATA_BY_AGE } from '../data/glossary-data-by-age';
 import { GlossaryTerm } from '../models/glossary';
 import { ReadingAgeService } from './reading-age.service';
+import { ContentLoaderService } from './content-loader.service';
 
 @Injectable({ providedIn: 'root' })
 export class GlossaryService {
   private readonly readingAge = inject(ReadingAgeService);
+  private readonly content = inject(ContentLoaderService);
   private readonly _searchQuery = signal('');
 
   readonly searchQuery = this._searchQuery.asReadonly();
 
   readonly allTerms = computed<GlossaryTerm[]>(() => {
-    const age = this.readingAge.effectiveReadingAge();
-    return GLOSSARY_DATA_BY_AGE[age];
+    const merged = this.content.merged();
+    if (!merged) return [];
+    return merged.glossary[this.readingAge.effectiveReadingAge()] ?? [];
   });
 
   readonly filteredTerms = computed<GlossaryTerm[]>(() => {
@@ -21,7 +23,7 @@ export class GlossaryService {
     return this.allTerms().filter(
       (term) =>
         term.term.toLowerCase().includes(query) ||
-        term.definition.toLowerCase().includes(query)
+        term.definition.toLowerCase().includes(query),
     );
   });
 

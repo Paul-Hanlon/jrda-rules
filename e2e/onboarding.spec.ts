@@ -600,6 +600,8 @@ test.describe('Onboarding — Derby Rules', () => {
     expect(href).toMatch(/^\/rules\//);
     // Grab the second rule's number, then land on the page with that fragment.
     await page.goto(href!);
+    // Wait past the content-loading gate before the (non-auto-waiting) count.
+    await expect(page.locator('.rule-item').first()).toBeVisible();
     const ruleCount = await page.locator('.rule-item').count();
     if (ruleCount < 2) test.skip();
     const secondRuleId = await page.locator('.rule-item').nth(1).getAttribute('id');

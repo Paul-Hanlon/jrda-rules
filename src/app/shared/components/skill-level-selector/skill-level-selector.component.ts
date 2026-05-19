@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { SkillLevelService } from '../../../services/skill-level.service';
-import { SkillLevel } from '../../../models/skill-level';
-import { SKILL_LEVELS } from '../../../data/skill-levels.data';
+import { ContentLoaderService } from '../../../services/content-loader.service';
 
 @Component({
   selector: 'app-skill-level-selector',
@@ -10,16 +9,16 @@ import { SKILL_LEVELS } from '../../../data/skill-levels.data';
     <fieldset class="level-selector" role="radiogroup" aria-label="Skill level">
       <legend class="visually-hidden">Select your skill level</legend>
       <span class="label" aria-hidden="true">Level</span>
-      @for (info of levels; track info.level) {
+      @for (info of levels(); track info.id) {
         <button
           type="button"
           role="radio"
-          [attr.aria-checked]="skillLevelService.level() === info.level"
-          [class.active]="skillLevelService.level() === info.level"
-          [attr.data-level]="info.level"
-          (click)="skillLevelService.setLevel(info.level)"
+          [attr.aria-checked]="skillLevelService.level() === info.id"
+          [class.active]="skillLevelService.level() === info.id"
+          [attr.data-level]="info.id"
+          (click)="skillLevelService.setLevel(info.id)"
         >
-          {{ info.level }}
+          {{ info.id }}
         </button>
       }
     </fieldset>
@@ -76,6 +75,7 @@ import { SKILL_LEVELS } from '../../../data/skill-levels.data';
   `,
 })
 export class SkillLevelSelectorComponent {
+  private readonly content = inject(ContentLoaderService);
   protected readonly skillLevelService = inject(SkillLevelService);
-  protected readonly levels = SKILL_LEVELS;
+  protected readonly levels = computed(() => this.content.activeManifest()?.skillLevels ?? []);
 }
