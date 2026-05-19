@@ -1,0 +1,44 @@
+{
+  "ops": [
+    {
+      "op": "addendum",
+      "id": "1.1.3",
+      "text": "JRDA has two additional scenarios: Sudden Scoring (large score differential at halftime) and Injury Call-offs (Jams called off due to player injury)."
+    },
+    {
+      "op": "addendum",
+      "id": "1.2",
+      "text": "J1.2.1: The Head Referee must declare a forfeit if a team has fewer than five active players. J1.2.2: The Head Referee may suspend gameplay or declare a Safety Default if venue conditions or gameplay pose an undue risk to participants' safety."
+    },
+    {
+      "op": "addendum",
+      "id": "2.1",
+      "text": "J2.1.1: Where necessary due to venue size restrictions, the track may be shortened to comply with JRDA Alternative Track dimensions."
+    },
+    {
+      "op": "addendum",
+      "id": "2.4",
+      "text": "J2.4.5: JRDA gameplay is divided into three Skill Levels with distinct contact allowances. L1: Only Positional Blocking; intentional contact prohibited. L2: Only Lean Blocking; initiating Forceful Contact prohibited. L3: All contact otherwise legal in the Rules is allowed."
+    },
+    {
+      "op": "addendum",
+      "id": "4.1",
+      "text": "J4.1.6: Contact penalties vary by Skill Level. L1: Any intentional contact with an opponent is penalized regardless of Target/Blocking Zone; any avoidable Forceful Contact is penalized regardless of impact. L2: Initiating Forceful Contact to an opponent warrants a penalty regardless of impact; gentle lean blocking is allowed. L3: All contact otherwise legal under the full rules is allowed."
+    },
+    {
+      "op": "addendum",
+      "id": "4.2",
+      "text": "J4.2.5: In L1 games, Skaters may adopt an illegal position (leave the track, exit the engagement zone, go down) to avoid contact with an opponent, even if it causes No Pack. In L2 games, the same applies to avoid Forceful Contact."
+    },
+    {
+      "op": "addendum",
+      "id": "4.3",
+      "text": "J4.3.1: Behavior intended to taunt, harass, or intimidate opposing players, coaches, Officials, or spectators is unsporting. Violations of the JRDA Code of Conduct should be penalized. J4.3.2: Some behavior warrants expulsion on the first instance, including repeated/excessive unsporting conduct, directed insults or slurs, threats, and failure to remove inappropriate symbols."
+    },
+    {
+      "op": "addendum",
+      "id": "4.5",
+      "text": "J4.5.1: A removed JRDA skater must report to the Designated Chaperone and may not be forced to leave the competition area unsupervised. The skater must remain in the venue accompanied by an adult."
+    }
+  ]
+}
