@@ -8,6 +8,10 @@
  * loader, merge engine, and ruleset-aware UI are built against.
  */
 import { ReadingAge } from './reading-age';
+import { RuleSection } from './rule';
+import { CasebookScenario } from './casebook';
+import { QuizTopic } from './quiz';
+import { GlossaryTerm } from './glossary';
 
 /** A reading-age cohort a ruleset ships content for. */
 export interface ReadingAgeDef {
@@ -114,3 +118,21 @@ export interface ProvenanceMeta {
 
 /** An item of type T carrying merge provenance. */
 export type Merged<T> = T & { _meta: ProvenanceMeta };
+
+/* ---- Loaded ruleset ---- */
+
+/** An entry in the ruleset registry (index.json). */
+export interface RulesetRegistryEntry {
+  id: string;
+  name: string;
+  selectable: boolean;
+}
+
+/** A fully-loaded, merged ruleset — the loader's output. */
+export interface MergedRuleset {
+  manifest: RulesetManifest;
+  rules: Merged<RuleSection>[];
+  casebook: Merged<CasebookScenario>[];
+  glossary: Record<string, Merged<GlossaryTerm>[]>;
+  quizzes: Record<string, Merged<QuizTopic>[]>;
+}
