@@ -1,7 +1,9 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { DEFAULT_PROGRESS, QuizAttempt, UserProgress } from '../models/progress';
+import { migrateStorageKey } from './storage-migration';
 
-const STORAGE_KEY = 'jrda-progress';
+const STORAGE_KEY = 'derby-rules-progress';
+const LEGACY_KEY = 'jrda-progress';
 const CURRENT_VERSION = 1;
 
 @Injectable({ providedIn: 'root' })
@@ -92,6 +94,7 @@ export class ProgressService {
 
   private loadProgress(): UserProgress {
     try {
+      migrateStorageKey(LEGACY_KEY, STORAGE_KEY);
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return { ...DEFAULT_PROGRESS };
       const parsed = JSON.parse(stored) as UserProgress;

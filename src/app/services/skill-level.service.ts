@@ -1,7 +1,9 @@
 import { Injectable, signal } from '@angular/core';
 import { SkillLevel } from '../models/skill-level';
+import { migrateStorageKey } from './storage-migration';
 
-const STORAGE_KEY = 'jrda-skill-level';
+const STORAGE_KEY = 'derby-rules-skill-level';
+const LEGACY_KEY = 'jrda-skill-level';
 
 @Injectable({ providedIn: 'root' })
 export class SkillLevelService {
@@ -15,6 +17,7 @@ export class SkillLevelService {
   }
 
   private loadLevel(): SkillLevel {
+    migrateStorageKey(LEGACY_KEY, STORAGE_KEY);
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'L1' || stored === 'L2' || stored === 'L3') {
       return stored;

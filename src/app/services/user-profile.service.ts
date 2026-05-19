@@ -7,8 +7,10 @@ import {
   UserProfile,
   roleFromAge,
 } from '../models/user-profile';
+import { migrateStorageKey } from './storage-migration';
 
-const STORAGE_KEY = 'jrda-user-profile';
+const STORAGE_KEY = 'derby-rules-user-profile';
+const LEGACY_KEY = 'jrda-user-profile';
 
 const DEFAULT_PROFILE: UserProfile = {
   role: 'skater',
@@ -150,6 +152,7 @@ export class UserProfileService {
 
   private load(): UserProfile | null {
     try {
+      migrateStorageKey(LEGACY_KEY, STORAGE_KEY);
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return null;
       const parsed = JSON.parse(stored) as UserProfile;
