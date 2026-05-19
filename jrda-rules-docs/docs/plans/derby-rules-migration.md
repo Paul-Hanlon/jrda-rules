@@ -16,7 +16,10 @@ rulesets (WFTDA, JRDA, MRDA, banked-track, etc.).
 
 Outcome: a generic ruleset architecture where content is bundled JSON, rulesets relate
 by optional inheritance, and the active ruleset is a user preference — plus a full
-rename to `derby-rules`. The whole change is gated so that, with the new
+rename to `derby-rules`. Three legacy names all converge on `derby-rules`: the
+npm/Angular project name `jrda-rules`, the GitHub repo `tbg-development/jrd-rules`
+(recently moved from `Paul-Hanlon/jrda-rules`), and the docs folder `jrda-rules-docs`.
+The whole change is gated so that, with the new
 `multiRuleset` flag off and JRDA as the only selectable ruleset, **the app behaves
 exactly as it does today**.
 
@@ -43,7 +46,9 @@ exactly as it does today**.
 11. Splitting current data yields a WFTDA ruleset as JRDA's parent. WFTDA is a
     structural parent only (`selectable: false`); the base need not be perfectly
     purified of JRDA-isms. Default/only selectable ruleset = JRDA.
-12. The GitHub repo is renamed to `derby-rules` (user does the GitHub-side rename).
+12. The GitHub repo — currently `tbg-development/jrd-rules`, moved from
+    `Paul-Hanlon/jrda-rules` — is renamed to `derby-rules` (user does the GitHub-side
+    rename).
 13. Async content uses an app-level gate: load+merge the active ruleset once with a
     loading state, then the four data services expose data via signals synchronously.
 
@@ -115,10 +120,14 @@ Strict order 0→1→2→3→4, then 5/6/7 (independent of each other).
   (live project unchanged); nothing to edit.
 - `index.html` title/meta → generic "Roller Derby rules".
 - Rename folder `jrda-rules-docs/` → `derby-rules-docs/`; update
-  `docusaurus.config.ts` (`title`, navbar/footer, `baseUrl: '/derby-rules/'`,
-  `projectName`) and `.github/workflows/deploy-docs.yml` (`cache-dependency-path`,
+  `docusaurus.config.ts` — currently stale at `Paul-Hanlon`/`jrda-rules`, set
+  `url: 'https://tbg-development.github.io'`, `baseUrl: '/derby-rules/'`,
+  `organizationName: 'tbg-development'`, `projectName: 'derby-rules'`, plus `title`
+  and navbar/footer — and `.github/workflows/deploy-docs.yml` (`cache-dependency-path`,
   both `working-directory`, artifact path).
-- `git remote set-url origin .../derby-rules.git` (after user renames repo on GitHub).
+- `git remote set-url origin https://github.com/tbg-development/derby-rules.git`
+  (after user renames the repo on GitHub; the remote was already moved off
+  `Paul-Hanlon/jrda-rules` to `tbg-development/jrd-rules`).
 - Verify: `npm run build` outputs `dist/derby-rules/browser`; `npm test` green.
 
 ### Phase 1 — Schema, models, branding (no behaviour change)
@@ -246,7 +255,9 @@ specs, data-integrity spec); `npx playwright test`; `npm run build`; docs build.
 - Union widening (Phase 1) may break exhaustive `switch`es — grep first.
 - Forgetting `src/assets` in `angular.json` ⇒ runtime 404s, not a build error.
 - Firebase `projectId` must stay `jrda-rules` — only `dist/` output dir renames.
-- User renames the GitHub repo before Phase 0's `git remote set-url`; the Docusaurus
-  `baseUrl` change must land in the same push as the workflow change.
+- User renames the GitHub repo (`tbg-development/jrd-rules` → `derby-rules`) before
+  Phase 0's `git remote set-url`; the Docusaurus `url`/`baseUrl`/`organizationName`
+  changes must land in the same push as the workflow change. The config is currently
+  stale (still `Paul-Hanlon/jrda-rules`), so the docs deploy may already be misrouted.
 - Old `.data.ts` deletion (end of Phase 4) is irreversible in-branch — keep until the
   data-integrity spec passes.
