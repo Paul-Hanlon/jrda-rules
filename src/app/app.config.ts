@@ -5,6 +5,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { routes } from './app.routes';
 import { AnalyticsService } from './services/analytics.service';
 import { RemoteConfigService } from './services/remote-config.service';
+import { ContentLoaderService } from './services/content-loader.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,6 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(AnalyticsService);
       inject(RemoteConfigService);
+      inject(ContentLoaderService);
     }),
   ],
 };
